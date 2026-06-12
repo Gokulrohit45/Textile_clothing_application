@@ -102,6 +102,14 @@ with app.app_context():
         except Exception as e:
             print(f"Error initializing database: {e}")
 
+@app.route('/', methods=['GET'])
+def index():
+    return jsonify({
+        "status": "active",
+        "message": "StyleHaven E-Commerce API is running successfully!",
+        "version": "1.0.0"
+    }), 200
+
 # ==========================================
 # AUTHENTICATION & USER MANAGEMENT
 # ==========================================
