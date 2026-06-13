@@ -291,9 +291,12 @@ export const ProductProvider = ({ children }) => {
         // Refetch products to get updated rating metrics
         const resProducts = await fetch(`${API_URL}/products`);
         if (resProducts.ok) setProducts(await resProducts.json());
+        return true;
       }
+      return false;
     } catch (err) {
       console.error('Add review error:', err);
+      return false;
     }
   };
 

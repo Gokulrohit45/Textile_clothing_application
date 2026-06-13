@@ -143,14 +143,18 @@ const ProductDetailPage = () => {
     }
   };
 
-  const handleReview = (e) => {
+  const handleReview = async (e) => {
     e.preventDefault();
     if (!isLoggedIn) { toast.error('Please log in'); return; }
     if (!reviewText.trim()) return;
-    addReview({ productId: id, userId: user.id, userName: user.name, rating: reviewRating, comment: reviewText });
-    setReviewText('');
-    setReviewRating(5);
-    toast.success('Review submitted!');
+    const success = await addReview({ productId: id, userId: user.id, userName: user.name, rating: reviewRating, comment: reviewText });
+    if (success) {
+      setReviewText('');
+      setReviewRating(5);
+      toast.success('Review submitted!');
+    } else {
+      toast.error('Failed to submit review. Please try again.');
+    }
   };
 
   return (

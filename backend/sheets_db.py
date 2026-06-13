@@ -51,9 +51,14 @@ def get_headers():
         "Content-Type": "application/json"
     }
 
-def parse_val(col_name, val):
+def parse_val(col_name, val, sheet_name=None):
     if val is None or val == '':
         return None
+    if sheet_name == 'reviews' and col_name == 'rating':
+        try:
+            return int(float(val))
+        except (ValueError, TypeError):
+            return val
     if col_name in INTEGER_FIELDS:
         try:
             return int(float(val))
@@ -86,8 +91,8 @@ def format_val(col_name, val):
         return json.dumps(val)
     return str(val)
 
-def clean_for_db(col_name, val):
-    return parse_val(col_name, val)
+def clean_for_db(col_name, val, sheet_name=None):
+    return parse_val(col_name, val, sheet_name)
 
 def get_all(sheet_name):
     url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/{sheet_name}"
@@ -99,7 +104,7 @@ def get_all(sheet_name):
             for item in data:
                 parsed_item = {}
                 for k, v in item.items():
-                    parsed_item[k] = parse_val(k, v)
+                    parsed_item[k] = parse_val(k, v, sheet_name)
                 parsed_data.append(parsed_item)
             return parsed_data
     except Exception as e:
@@ -115,7 +120,7 @@ def save(sheet_name, item):
     
     db_item = {}
     for k, v in item.items():
-        db_item[k] = clean_for_db(k, v)
+        db_item[k] = clean_for_db(k, v, sheet_name)
         
     data_bytes = json.dumps(db_item).encode('utf-8')
     req = urllib.request.Request(url, data=data_bytes, headers=headers, method='POST')
@@ -123,7 +128,7 @@ def save(sheet_name, item):
         with urllib.request.urlopen(req, context=ctx) as response:
             res_data = json.loads(response.read().decode('utf-8'))
             if isinstance(res_data, list) and len(res_data) > 0:
-                return {k: parse_val(k, v) for k, v in res_data[0].items()}
+                return {k: parse_val(k, v, sheet_name) for k, v in res_data[0].items()}
             return item
     except Exception as e:
         print(f"Error in sheets_db.save({sheet_name}): {e}")
@@ -139,7 +144,7 @@ def update(sheet_name, id_val, updates):
     db_updates = {}
     for k, v in updates.items():
         if k != id_col:
-            db_updates[k] = clean_for_db(k, v)
+            db_updates[k] = clean_for_db(k, v, sheet_name)
             
     data_bytes = json.dumps(db_updates).encode('utf-8')
     req = urllib.request.Request(url, data=data_bytes, headers=headers, method='PATCH')
@@ -267,7 +272,7 @@ def initialize_database():
                     
                     db_rows = []
                     for item in mock_list:
-                        db_row = {k: clean_for_db(k, v) for k, v in item.items()}
+                        db_row = {k: clean_for_db(k, v, table_name) for k, v in item.items()}
                         db_rows.append(db_row)
                         
                     data_bytes = json.dumps(db_rows).encode('utf-8')
