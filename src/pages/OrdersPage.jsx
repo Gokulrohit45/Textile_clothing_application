@@ -146,14 +146,12 @@ const OrdersPage = () => {
                           Payment: {payment?.status === 'verified' ? 'Verified ✓' : payment?.status === 'rejected' ? 'Rejected ✗' : 'Pending verification'}
                         </div>
                         
-                        {payment?.status !== 'verified' && (
-                          <button
-                            onClick={() => togglePaymentInfo(order.id)}
-                            className="text-xs text-accent-700 hover:text-accent-800 font-semibold underline"
-                          >
-                            {isPaymentExpanded ? 'Hide Payment Info' : 'Show Payment Info & QR'}
-                          </button>
-                        )}
+                        <button
+                          onClick={() => togglePaymentInfo(order.id)}
+                          className="text-xs text-accent-700 hover:text-accent-800 font-semibold underline"
+                        >
+                          {isPaymentExpanded ? 'Hide Payment Info' : 'Show Payment Info & QR'}
+                        </button>
                       </>
                     ) : (
                       <div className={`text-xs flex items-center gap-1.5 font-medium ${
@@ -165,10 +163,10 @@ const OrdersPage = () => {
                     )}
                   </div>
 
-                  {order.paymentMethod === 'gpay' && isPaymentExpanded && payment?.status !== 'verified' && (
+                  {order.paymentMethod === 'gpay' && isPaymentExpanded && (
                     <div className="bg-neutral-50 rounded-xl p-4 border border-neutral-100 space-y-3 animate-fade-in">
                       <p className="text-xs font-semibold text-primary text-center">
-                        Scan to pay ₹{order.total.toLocaleString()} via GPay/UPI
+                        {payment?.status === 'verified' ? 'Verified Payment Details' : `Scan to pay ₹${order.total.toLocaleString()} via GPay/UPI`}
                       </p>
                       
                       {/* QR / UPI Display */}
@@ -202,20 +200,24 @@ const OrdersPage = () => {
                                 View Larger
                               </button>
                             </div>
-                            <label className="btn-outline py-1 px-2.5 text-[10px] cursor-pointer inline-flex items-center gap-1 bg-white">
-                              <Upload className="w-3 h-3" /> Change Screenshot
-                              <input type="file" accept="image/*" className="hidden" onChange={(e) => handleScreenshotUpload(order.id, e)} />
-                            </label>
+                            {payment?.status !== 'verified' && (
+                              <label className="btn-outline py-1 px-2.5 text-[10px] cursor-pointer inline-flex items-center gap-1 bg-white">
+                                <Upload className="w-3 h-3" /> Change Screenshot
+                                <input type="file" accept="image/*" className="hidden" onChange={(e) => handleScreenshotUpload(order.id, e)} />
+                              </label>
+                            )}
                           </div>
                         ) : (
-                          <div>
-                            <p className="text-xs font-semibold text-neutral-600 mb-1.5">Upload Payment Screenshot</p>
-                            <label className="btn-primary py-1.5 px-4 text-xs cursor-pointer inline-flex items-center gap-1.5">
-                              <Upload className="w-3.5 h-3.5" /> Select Screenshot File
-                              <input type="file" accept="image/*" className="hidden" onChange={(e) => handleScreenshotUpload(order.id, e)} />
-                            </label>
-                            <p className="text-[10px] text-neutral-400 mt-1">Please upload the transaction confirmation image to complete verification.</p>
-                          </div>
+                          payment?.status !== 'verified' && (
+                            <div>
+                              <p className="text-xs font-semibold text-neutral-600 mb-1.5">Upload Payment Screenshot</p>
+                              <label className="btn-primary py-1.5 px-4 text-xs cursor-pointer inline-flex items-center gap-1.5">
+                                <Upload className="w-3.5 h-3.5" /> Select Screenshot File
+                                <input type="file" accept="image/*" className="hidden" onChange={(e) => handleScreenshotUpload(order.id, e)} />
+                              </label>
+                              <p className="text-[10px] text-neutral-400 mt-1">Please upload the transaction confirmation image to complete verification.</p>
+                            </div>
+                          )
                         )}
                       </div>
                     </div>
