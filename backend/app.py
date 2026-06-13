@@ -106,7 +106,7 @@ with app.app_context():
 def index():
     return jsonify({
         "status": "active",
-        "message": "StyleHaven E-Commerce API is running successfully!",
+        "message": "PSP garments and clothing E-Commerce API is running successfully!",
         "version": "1.0.0"
     }), 200
 
@@ -249,17 +249,17 @@ def send_brevo_email(to_email, to_name, otp):
     
     try:
         settings = sheets_db.get_settings()
-        site_name = settings.get('siteName', 'StyleHaven')
+        site_name = settings.get('siteName', 'PSP garments and clothing')
         site_logo = settings.get('logo')
         site_tagline = settings.get('tagline', 'Dress Your Best, Every Day')
-        sender_email = os.environ.get("BREVO_SENDER_EMAIL", settings.get('email', 'support@StyleHaven.com'))
+        sender_email = os.environ.get("BREVO_SENDER_EMAIL", settings.get('email', 'shanthiprabaa@gmail.com'))
         sender_name = os.environ.get("BREVO_SENDER_NAME", f"{site_name} Support")
     except Exception:
-        site_name = 'StyleHaven'
+        site_name = 'PSP garments and clothing'
         site_logo = None
         site_tagline = 'Dress Your Best, Every Day'
-        sender_email = os.environ.get("BREVO_SENDER_EMAIL", "support@StyleHaven.com")
-        sender_name = os.environ.get("BREVO_SENDER_NAME", "StyleHaven Support")
+        sender_email = os.environ.get("BREVO_SENDER_EMAIL", "shanthiprabaa@gmail.com")
+        sender_name = os.environ.get("BREVO_SENDER_NAME", "PSP garments and clothing Support")
     
     logo_html = f'<img src="{site_logo}" alt="{site_name}" style="max-height: 80px; margin-bottom: 10px;" />' if site_logo else f'<h1 style="color: #1A1A2E; margin: 0; font-family: \'Playfair Display\', Georgia, serif; font-size: 28px;">{site_name}</h1>'
     
@@ -365,23 +365,23 @@ def send_order_email(order, event_type):
         # Fetch dynamic settings
         try:
             settings = sheets_db.get_settings()
-            site_name = settings.get('siteName', 'StyleHaven')
+            site_name = settings.get('siteName', 'PSP garments and clothing')
             site_logo = settings.get('logo')
             site_tagline = settings.get('tagline', 'Dress Your Best, Every Day')
-            site_email = settings.get('email', 'support@stylehaven.com')
-            site_address = settings.get('address', '123 Fashion Street, Mumbai, India')
-            site_phone = settings.get('phone', '+91 98765 43210')
+            site_email = settings.get('email', 'shanthiprabaa@gmail.com')
+            site_address = settings.get('address', 'Delite Building 719, Puliyakulam Road, Dhamu nagar, Coimbatore - 641 045')
+            site_phone = settings.get('phone', '8903733144')
             sender_email = os.environ.get("BREVO_SENDER_EMAIL", site_email)
             sender_name = os.environ.get("BREVO_SENDER_NAME", f"{site_name} Support")
         except Exception:
-            site_name = 'StyleHaven'
+            site_name = 'PSP garments and clothing'
             site_logo = None
             site_tagline = 'Dress Your Best, Every Day'
-            site_email = 'support@stylehaven.com'
-            site_address = '123 Fashion Street, Mumbai, India'
-            site_phone = '+91 98765 43210'
-            sender_email = os.environ.get("BREVO_SENDER_EMAIL", "support@stylehaven.com")
-            sender_name = os.environ.get("BREVO_SENDER_NAME", "StyleHaven Support")
+            site_email = 'shanthiprabaa@gmail.com'
+            site_address = 'Delite Building 719, Puliyakulam Road, Dhamu nagar, Coimbatore - 641 045'
+            site_phone = '8903733144'
+            sender_email = os.environ.get("BREVO_SENDER_EMAIL", "shanthiprabaa@gmail.com")
+            sender_name = os.environ.get("BREVO_SENDER_NAME", "PSP garments and clothing Support")
 
         logo_html = f'<img src="{site_logo}" alt="{site_name}" style="max-height: 80px; margin-bottom: 10px;" />' if site_logo else f'<h1 style="color: #1A1A2E; margin: 0; font-family: \'Playfair Display\', Georgia, serif; font-size: 32px; letter-spacing: 1px;">{site_name}</h1>'
 

@@ -345,12 +345,13 @@ export const mockPayments = [
 ];
 
 export const mockSettings = {
-  siteName: 'StyleHaven',
-  logo: null,
+  siteName: 'PSP garments and clothing',
+  logo: 'https://ujfgmnwydzonuggcsehz.supabase.co/storage/v1/object/public/uploads/logo_bf961e2dd970470786fd63943c39fcaa.jpg',
   tagline: 'Dress Your Best, Every Day',
-  phone: '+91 98765 43210',
-  email: 'support@StyleHaven.com',
-  address: '123 Fashion Street, Mumbai, India',
+  phone: '8903733144',
+  whatsapp: '7708533144',
+  email: 'shanthiprabaa@gmail.com',
+  address: 'Delite Building 719, Puliyakulam Road, Dhamu nagar, Coimbatore - 641 045',
   gpayUPI: 'stylehaven@upi',
   gpayQR: null, // Admin uploads QR image
   socialLinks: {

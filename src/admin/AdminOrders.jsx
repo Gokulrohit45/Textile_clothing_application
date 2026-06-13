@@ -47,12 +47,12 @@ const AdminOrders = () => {
   };
 
   const handlePrint = (order) => {
-    const siteName = settings?.siteName || 'StyleHaven';
+    const siteName = settings?.siteName || 'PSP garments and clothing';
     const siteLogo = settings?.logo;
     const siteTagline = settings?.tagline || 'Dress Your Best, Every Day';
-    const siteAddress = settings?.address || '123 Fashion Street, Mumbai, India';
-    const sitePhone = settings?.phone || '+91 98765 43210';
-    const siteEmail = settings?.email || 'support@stylehaven.com';
+    const siteAddress = settings?.address || 'Delite Building 719, Puliyakulam Road, Dhamu nagar, Coimbatore - 641 045';
+    const sitePhone = settings?.phone || '8903733144';
+    const siteEmail = settings?.email || 'shanthiprabaa@gmail.com';
 
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
@@ -134,7 +134,7 @@ const AdminOrders = () => {
   };
 
   const handlePrintMonthlyInvoice = (ordersList, monthKey) => {
-    const siteName = settings?.siteName || 'StyleHaven';
+    const siteName = settings?.siteName || 'PSP garments and clothing';
     const siteLogo = settings?.logo;
     const siteTagline = settings?.tagline || 'Dress Your Best, Every Day';
 
