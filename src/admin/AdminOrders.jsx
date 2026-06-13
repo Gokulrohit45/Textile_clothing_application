@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Search, ChevronDown, Printer, Eye, X } from 'lucide-react';
 import { useOrder } from '../context/OrderContext';
+import { useSettings } from '../context/SettingsContext';
 
 const STATUSES = ['pending', 'processing', 'shipped', 'delivered', 'payment_rejected'];
 const STATUS_COLOR = {
@@ -10,6 +11,7 @@ const STATUS_COLOR = {
 
 const AdminOrders = () => {
   const { orders, updateOrderStatus } = useOrder();
+  const { settings } = useSettings();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -45,6 +47,13 @@ const AdminOrders = () => {
   };
 
   const handlePrint = (order) => {
+    const siteName = settings?.siteName || 'StyleHaven';
+    const siteLogo = settings?.logo;
+    const siteTagline = settings?.tagline || 'Dress Your Best, Every Day';
+    const siteAddress = settings?.address || '123 Fashion Street, Mumbai, India';
+    const sitePhone = settings?.phone || '+91 98765 43210';
+    const siteEmail = settings?.email || 'support@stylehaven.com';
+
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
     printWindow.document.write(`
@@ -53,7 +62,8 @@ const AdminOrders = () => {
         <title>Invoice - Order #${order.id.toUpperCase()}</title>
         <style>
           body { font-family: sans-serif; color: #333; padding: 30px; }
-          .header { text-align: center; margin-bottom: 30px; }
+          .header { text-align: center; margin-bottom: 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+          .brand-logo { max-height: 60px; object-fit: contain; margin-bottom: 8px; }
           .brand { font-size: 24px; font-weight: bold; color: #1A1A2E; margin: 0; }
           .subtitle { font-size: 12px; color: #E8B86D; text-transform: uppercase; margin: 2px 0 0 0; }
           .meta { margin-top: 15px; font-size: 14px; color: #555; }
@@ -70,8 +80,8 @@ const AdminOrders = () => {
       </head>
       <body>
         <div class="header">
-          <div class="brand">StyleHaven</div>
-          <div class="subtitle">Dress Your Best, Every Day</div>
+          ${siteLogo ? `<img src="${siteLogo}" class="brand-logo" alt="${siteName}" />` : `<div class="brand">${siteName}</div>`}
+          <div class="subtitle">${siteTagline}</div>
           <div class="meta">
             <strong>Order ID:</strong> #${order.id.toUpperCase()} &nbsp;&bull;&nbsp; 
             <strong>Date:</strong> ${order.createdAt}
@@ -80,7 +90,8 @@ const AdminOrders = () => {
         <div class="details">
           <strong>Customer:</strong> ${order.userName}<br/>
           <strong>Payment:</strong> ${order.paymentMethod?.toUpperCase()} (${order.paymentStatus})<br/>
-          <strong>Delivery Destination:</strong> ${order.shippingAddress ? `${order.shippingAddress.name || order.userName}, ${order.shippingAddress.addressLine1}, ${order.shippingAddress.city}, ${order.shippingAddress.state} - ${order.shippingAddress.pincode}` : 'N/A'}
+          <strong>Delivery Destination:</strong> ${order.shippingAddress ? `${order.shippingAddress.name || order.userName}, ${order.shippingAddress.addressLine1}, ${order.shippingAddress.city}, ${order.shippingAddress.state} - ${order.shippingAddress.pincode}` : 'N/A'}<br/>
+          <strong>Merchant:</strong> ${siteName} | Phone: ${sitePhone} | Email: ${siteEmail} | Address: ${siteAddress}
         </div>
         <table>
           <thead>
@@ -113,7 +124,7 @@ const AdminOrders = () => {
           </table>
         </div>
         <div class="footer">
-          StyleHaven E-Commerce Platform &bull; Printed Invoice
+          ${siteName} E-Commerce Platform &bull; Printed Invoice
         </div>
       </body>
       </html>
@@ -123,6 +134,10 @@ const AdminOrders = () => {
   };
 
   const handlePrintMonthlyInvoice = (ordersList, monthKey) => {
+    const siteName = settings?.siteName || 'StyleHaven';
+    const siteLogo = settings?.logo;
+    const siteTagline = settings?.tagline || 'Dress Your Best, Every Day';
+
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
@@ -146,7 +161,8 @@ const AdminOrders = () => {
         <title>Monthly Statement - ${periodName}</title>
         <style>
           body { font-family: sans-serif; color: #333; padding: 30px; }
-          .header { text-align: center; margin-bottom: 30px; }
+          .header { text-align: center; margin-bottom: 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+          .brand-logo { max-height: 60px; object-fit: contain; margin-bottom: 8px; }
           .brand { font-size: 24px; font-weight: bold; color: #1A1A2E; margin: 0; }
           .subtitle { font-size: 12px; color: #E8B86D; text-transform: uppercase; margin: 2px 0 0 0; }
           .meta { margin-top: 15px; font-size: 14px; color: #555; }
@@ -170,7 +186,7 @@ const AdminOrders = () => {
       </head>
       <body>
         <div class="header">
-          <div class="brand">StyleHaven</div>
+          ${siteLogo ? `<img src="${siteLogo}" class="brand-logo" alt="${siteName}" />` : `<div class="brand">${siteName}</div>`}
           <div class="subtitle">Monthly Sales Statement & Invoice</div>
           <div class="meta">
             <strong>Statement Period:</strong> ${periodName} &nbsp;&bull;&nbsp; 
@@ -231,7 +247,7 @@ const AdminOrders = () => {
         </table>
 
         <div class="footer">
-          StyleHaven Business Administration Dashboard &bull; Generated Monthly Invoice Statement
+          ${siteName} Business Administration Dashboard &bull; Generated Monthly Invoice Statement
         </div>
       </body>
       </html>

@@ -247,8 +247,21 @@ def send_brevo_email(to_email, to_name, otp):
         "accept": "application/json"
     }
     
-    sender_email = os.environ.get("BREVO_SENDER_EMAIL", "support@StyleHaven.com")
-    sender_name = os.environ.get("BREVO_SENDER_NAME", "StyleHaven Support")
+    try:
+        settings = sheets_db.get_settings()
+        site_name = settings.get('siteName', 'StyleHaven')
+        site_logo = settings.get('logo')
+        site_tagline = settings.get('tagline', 'Dress Your Best, Every Day')
+        sender_email = os.environ.get("BREVO_SENDER_EMAIL", settings.get('email', 'support@StyleHaven.com'))
+        sender_name = os.environ.get("BREVO_SENDER_NAME", f"{site_name} Support")
+    except Exception:
+        site_name = 'StyleHaven'
+        site_logo = None
+        site_tagline = 'Dress Your Best, Every Day'
+        sender_email = os.environ.get("BREVO_SENDER_EMAIL", "support@StyleHaven.com")
+        sender_name = os.environ.get("BREVO_SENDER_NAME", "StyleHaven Support")
+    
+    logo_html = f'<img src="{site_logo}" alt="{site_name}" style="max-height: 80px; margin-bottom: 10px;" />' if site_logo else f'<h1 style="color: #1A1A2E; margin: 0; font-family: \'Playfair Display\', Georgia, serif; font-size: 28px;">{site_name}</h1>'
     
     data = {
         "sender": {
@@ -261,14 +274,14 @@ def send_brevo_email(to_email, to_name, otp):
               "name": to_name
             }
         ],
-        "subject": "Password Reset OTP - StyleHaven",
+        "subject": f"Password Reset OTP - {site_name}",
         "htmlContent": f"""
         <html>
             <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; background-color: #F5F0EB; padding: 40px 20px;">
                 <div style="max-width: 600px; margin: 0 auto; bg-color: #ffffff; padding: 30px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); background: #ffffff;">
                     <div style="text-align: center; margin-bottom: 20px;">
-                        <h1 style="color: #1A1A2E; margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px;">StyleHaven</h1>
-                        <p style="color: #E8B86D; margin: 5px 0 0 0; font-size: 14px; text-transform: uppercase; letter-spacing: 2px;">Dress Your Best, Every Day</p>
+                        {logo_html}
+                        <p style="color: #E8B86D; margin: 5px 0 0 0; font-size: 14px; text-transform: uppercase; letter-spacing: 2px;">{site_tagline}</p>
                     </div>
                     <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
                     <p style="font-size: 16px; color: #1A1A2E;">Hello <strong>{to_name}</strong>,</p>
@@ -278,7 +291,7 @@ def send_brevo_email(to_email, to_name, otp):
                     </div>
                     <p style="font-size: 13px; color: #777;">This OTP is valid for <strong>10 minutes</strong>. If you did not request a password reset, you can safely ignore this email.</p>
                     <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
-                    <p style="font-size: 11px; text-align: center; color: #999;">StyleHaven Customer Support • This is an automated message, please do not reply.</p>
+                    <p style="font-size: 11px; text-align: center; color: #999;">{site_name} Customer Support • This is an automated message, please do not reply.</p>
                 </div>
             </body>
         </html>
@@ -349,14 +362,37 @@ def send_order_email(order, event_type):
             </tr>
             """
 
+        # Fetch dynamic settings
+        try:
+            settings = sheets_db.get_settings()
+            site_name = settings.get('siteName', 'StyleHaven')
+            site_logo = settings.get('logo')
+            site_tagline = settings.get('tagline', 'Dress Your Best, Every Day')
+            site_email = settings.get('email', 'support@stylehaven.com')
+            site_address = settings.get('address', '123 Fashion Street, Mumbai, India')
+            site_phone = settings.get('phone', '+91 98765 43210')
+            sender_email = os.environ.get("BREVO_SENDER_EMAIL", site_email)
+            sender_name = os.environ.get("BREVO_SENDER_NAME", f"{site_name} Support")
+        except Exception:
+            site_name = 'StyleHaven'
+            site_logo = None
+            site_tagline = 'Dress Your Best, Every Day'
+            site_email = 'support@stylehaven.com'
+            site_address = '123 Fashion Street, Mumbai, India'
+            site_phone = '+91 98765 43210'
+            sender_email = os.environ.get("BREVO_SENDER_EMAIL", "support@stylehaven.com")
+            sender_name = os.environ.get("BREVO_SENDER_NAME", "StyleHaven Support")
+
+        logo_html = f'<img src="{site_logo}" alt="{site_name}" style="max-height: 80px; margin-bottom: 10px;" />' if site_logo else f'<h1 style="color: #1A1A2E; margin: 0; font-family: \'Playfair Display\', Georgia, serif; font-size: 32px; letter-spacing: 1px;">{site_name}</h1>'
+
         # 4. Formulate event-specific messaging
         if event_type == 'placed':
-            subject = f"Your Order has been Placed - StyleHaven"
+            subject = f"Your Order has been Placed - {site_name}"
             title_message = "Thank you for your order!"
             body_message = "Your order has been received and is currently being processed. Here are your invoice details:"
             order_status = "placed"
         else:
-            subject = f"Your Order has been Delivered - StyleHaven"
+            subject = f"Your Order has been Delivered - {site_name}"
             title_message = "Your order has been delivered!"
             body_message = "Great news! Your order has been delivered successfully. Thank you for shopping with us! Here are your invoice details:"
             order_status = "delivered"
@@ -394,8 +430,8 @@ def send_order_email(order, event_type):
             <div style="max-width: 650px; margin: 0 auto; background: #ffffff; padding: 40px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
                 <!-- Header -->
                 <div style="text-align: center; margin-bottom: 30px;">
-                    <h1 style="color: #1A1A2E; margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 32px; letter-spacing: 1px;">StyleHaven</h1>
-                    <p style="color: #E8B86D; margin: 5px 0 0 0; font-size: 14px; text-transform: uppercase; letter-spacing: 2px; font-weight: bold;">Dress Your Best, Every Day</p>
+                    {logo_html}
+                    <p style="color: #E8B86D; margin: 5px 0 0 0; font-size: 14px; text-transform: uppercase; letter-spacing: 2px; font-weight: bold;">{site_tagline}</p>
                 </div>
                 
                 <hr style="border: 0; border-top: 1px solid #EAEAEA; margin: 25px 0;" />
@@ -471,8 +507,8 @@ def send_order_email(order, event_type):
                 
                 <!-- Footer -->
                 <div style="text-align: center; color: #999; font-size: 12px;">
-                    <p style="margin: 5px 0;">If you have any questions, please contact our support team at support@stylehaven.com.</p>
-                    <p style="margin: 5px 0; font-weight: bold;">StyleHaven Inc. • Dress Your Best, Every Day</p>
+                    <p style="margin: 5px 0;">If you have any questions, please contact our support team at {site_email} or call {site_phone}.</p>
+                    <p style="margin: 5px 0; font-weight: bold;">{site_name} • {site_address}</p>
                 </div>
             </div>
         </body>
@@ -486,8 +522,6 @@ def send_order_email(order, event_type):
             "accept": "application/json"
         }
         
-        sender_email = os.environ.get("BREVO_SENDER_EMAIL", "support@stylehaven.com")
-        sender_name = os.environ.get("BREVO_SENDER_NAME", "StyleHaven Support")
         data = {
             "sender": {
                 "name": sender_name,
