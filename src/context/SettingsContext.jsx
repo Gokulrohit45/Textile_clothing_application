@@ -25,6 +25,21 @@ export const SettingsProvider = ({ children }) => {
     fetchSettings();
   }, []);
 
+  useEffect(() => {
+    if (settings) {
+      document.title = settings.siteName ? `${settings.siteName} - ${settings.tagline || 'Shop'}` : 'PSP garments and clothing';
+      if (settings.logo) {
+        let link = document.querySelector("link[rel~='icon']");
+        if (!link) {
+          link = document.createElement('link');
+          link.rel = 'icon';
+          document.getElementsByTagName('head')[0].appendChild(link);
+        }
+        link.href = settings.logo;
+      }
+    }
+  }, [settings]);
+
   const updateSettings = async (updates) => {
     try {
       // Optimistic update

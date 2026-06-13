@@ -30,7 +30,7 @@ export const LoginPage = () => {
         const defaultPath = result.user.role === 'admin' ? '/admin' : '/';
         const finalRedirect = redirectParam || stateRedirect || defaultPath;
         
-        if (result.user.role === 'admin' && !redirectParam && !stateRedirect) {
+        if (result.user.role === 'admin') {
           navigate('/admin');
         } else {
           navigate(finalRedirect);

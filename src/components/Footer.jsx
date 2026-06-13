@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ShoppingBag, Mail, Phone, MapPin } from 'lucide-react';
+import { ShoppingBag, Mail, Phone, MapPin, MessageCircle } from 'lucide-react';
 import { Instagram, Facebook, Twitter, Youtube } from './BrandIcons';
 import { useSettings } from '../context/SettingsContext';
 
@@ -112,6 +112,14 @@ const Footer = () => {
                   {settings.phone}
                 </a>
               </li>
+              {settings.whatsapp && (
+                <li className="flex items-center gap-3">
+                  <MessageCircle className="w-4 h-4 text-[#25D366] flex-shrink-0" />
+                  <a href={`https://wa.me/91${settings.whatsapp}`} target="_blank" rel="noopener noreferrer" className="text-neutral-400 text-sm hover:text-white transition-colors">
+                    +91 {settings.whatsapp} (WhatsApp)
+                  </a>
+                </li>
+              )}
               <li className="flex items-center gap-3">
                 <Mail className="w-4 h-4 text-accent flex-shrink-0" />
                 <a href={`mailto:${settings.email}`} className="text-neutral-400 text-sm hover:text-white transition-colors">

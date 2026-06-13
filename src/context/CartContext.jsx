@@ -1,8 +1,10 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { useAuth } from './AuthContext';
 
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
+  const { user } = useAuth();
   const [cartItems, setCartItems] = useState(() => {
     const s = localStorage.getItem('sh_cart');
     return s ? JSON.parse(s) : [];
@@ -42,6 +44,14 @@ export const CartProvider = ({ children }) => {
     setCartItems([]);
     setAppliedCoupon(null);
   };
+
+  const prevUserRef = useRef(user?.id);
+  useEffect(() => {
+    if (prevUserRef.current !== user?.id) {
+      clearCart();
+      prevUserRef.current = user?.id;
+    }
+  }, [user?.id]);
 
   const applyCoupon = (coupon) => setAppliedCoupon(coupon);
   const removeCoupon = () => setAppliedCoupon(null);
