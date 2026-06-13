@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, Upload, Globe, Phone, Mail, MapPin } from 'lucide-react';
+import { Save, Upload, Globe, Phone, Mail, MapPin, MessageCircle } from 'lucide-react';
 import { Instagram, Facebook, Twitter, Youtube } from '../components/BrandIcons';
 import { useSettings } from '../context/SettingsContext';
 import { useAuth } from '../context/AuthContext';
@@ -304,15 +304,19 @@ const AdminSettings = () => {
               </div>
               <div>
                 <label className="label flex items-center gap-1"><Phone className="w-3.5 h-3.5" /> Phone</label>
-                <input className="input" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} />
+                <input className="input" value={form.phone || ''} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} />
+              </div>
+              <div>
+                <label className="label flex items-center gap-1"><MessageCircle className="w-3.5 h-3.5 text-[#25D366]" /> WhatsApp</label>
+                <input className="input" value={form.whatsapp || ''} onChange={e => setForm(p => ({ ...p, whatsapp: e.target.value }))} placeholder="e.g. 7708533144" />
               </div>
               <div>
                 <label className="label flex items-center gap-1"><Mail className="w-3.5 h-3.5" /> Email</label>
-                <input type="email" className="input" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} />
+                <input type="email" className="input" value={form.email || ''} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} />
               </div>
               <div className="md:col-span-2">
                 <label className="label flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> Address</label>
-                <input className="input" value={form.address} onChange={e => setForm(p => ({ ...p, address: e.target.value }))} />
+                <input className="input" value={form.address || ''} onChange={e => setForm(p => ({ ...p, address: e.target.value }))} />
               </div>
               <div>
                 <label className="label">Shipping Charge (₹)</label>
