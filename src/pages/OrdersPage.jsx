@@ -72,6 +72,11 @@ const OrdersPage = () => {
             const Icon = STATUS_ICONS[order.status] || Clock;
             const isNew = order.id === newOrderId;
 
+            // Auto-expand payment info if new order and not yet verified
+            const isPaymentExpanded = showPaymentInfo[order.id] !== undefined
+              ? showPaymentInfo[order.id]
+              : (isNew && payment?.status !== 'verified');
+
             return (
               <div key={order.id} className={`card p-5 animate-fade-in ${isNew ? 'ring-2 ring-success' : ''}`}>
                 {isNew && (
@@ -129,84 +134,93 @@ const OrdersPage = () => {
                 </div>
 
                 {/* Payment status */}
-                {order.paymentMethod === 'gpay' && (
-                  <div className="mt-3 space-y-3">
-                    <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div className="mt-3 space-y-3">
+                  <div className="flex items-center justify-between gap-4 flex-wrap">
+                    {order.paymentMethod === 'gpay' ? (
+                      <>
+                        <div className={`text-xs flex items-center gap-1.5 font-medium ${
+                          payment?.status === 'verified' ? 'text-success' :
+                          payment?.status === 'rejected' ? 'text-danger' : 'text-warning'
+                        }`}>
+                          <AlertCircle className="w-3.5 h-3.5" />
+                          Payment: {payment?.status === 'verified' ? 'Verified ✓' : payment?.status === 'rejected' ? 'Rejected ✗' : 'Pending verification'}
+                        </div>
+                        
+                        {payment?.status !== 'verified' && (
+                          <button
+                            onClick={() => togglePaymentInfo(order.id)}
+                            className="text-xs text-accent-700 hover:text-accent-800 font-semibold underline"
+                          >
+                            {isPaymentExpanded ? 'Hide Payment Info' : 'Show Payment Info & QR'}
+                          </button>
+                        )}
+                      </>
+                    ) : (
                       <div className={`text-xs flex items-center gap-1.5 font-medium ${
-                        payment?.status === 'verified' ? 'text-success' :
-                        payment?.status === 'rejected' ? 'text-danger' : 'text-warning'
+                        order.paymentStatus === 'verified' ? 'text-success' : 'text-warning'
                       }`}>
                         <AlertCircle className="w-3.5 h-3.5" />
-                        Payment: {payment?.status === 'verified' ? 'Verified ✓' : payment?.status === 'rejected' ? 'Rejected ✗' : 'Pending verification'}
-                      </div>
-                      
-                      {payment?.status !== 'verified' && (
-                        <button
-                          onClick={() => togglePaymentInfo(order.id)}
-                          className="text-xs text-accent-700 hover:text-accent-800 font-semibold underline"
-                        >
-                          {showPaymentInfo[order.id] ? 'Hide Payment Info' : 'Show Payment Info & QR'}
-                        </button>
-                      )}
-                    </div>
-
-                    {showPaymentInfo[order.id] && payment?.status !== 'verified' && (
-                      <div className="bg-neutral-50 rounded-xl p-4 border border-neutral-100 space-y-3 animate-fade-in">
-                        <p className="text-xs font-semibold text-primary text-center">
-                          Scan to pay ₹{order.total.toLocaleString()} via GPay/UPI
-                        </p>
-                        
-                        {/* QR / UPI Display */}
-                        <div className="w-32 h-32 mx-auto bg-white rounded-xl border border-neutral-200 flex flex-col items-center justify-center p-2">
-                          {settings.gpayQR ? (
-                            <img src={settings.gpayQR} alt="GPay QR" className="w-full h-full object-contain rounded-lg" />
-                          ) : (
-                            <div className="text-center p-1">
-                              <Smartphone className="w-8 h-8 text-neutral-300 mx-auto mb-1" />
-                              <span className="text-[9px] text-neutral-400 block">No QR code configured</span>
-                            </div>
-                          )}
-                        </div>
-                        {settings.gpayUPI && (
-                          <p className="text-center text-[11px] text-neutral-500">
-                            UPI ID: <span className="font-semibold text-primary text-xs select-all">{settings.gpayUPI}</span>
-                          </p>
-                        )}
-
-                        {/* Screenshot Section */}
-                        <div className="pt-2 border-t border-neutral-100">
-                          {payment?.screenshot ? (
-                            <div className="space-y-2">
-                              <p className="text-[11px] text-neutral-500 font-medium">Your uploaded screenshot:</p>
-                              <div className="relative w-24 aspect-[3/4] rounded-lg overflow-hidden border border-neutral-200 bg-white">
-                                <img src={payment.screenshot} alt="Screenshot preview" className="w-full h-full object-cover" />
-                                <button
-                                  onClick={() => setViewImg(payment.screenshot)}
-                                  className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-semibold"
-                                >
-                                  View Larger
-                                </button>
-                              </div>
-                              <label className="btn-outline py-1 px-2.5 text-[10px] cursor-pointer inline-flex items-center gap-1 bg-white">
-                                <Upload className="w-3 h-3" /> Change Screenshot
-                                <input type="file" accept="image/*" className="hidden" onChange={(e) => handleScreenshotUpload(order.id, e)} />
-                              </label>
-                            </div>
-                          ) : (
-                            <div>
-                              <p className="text-xs font-semibold text-neutral-600 mb-1.5">Upload Payment Screenshot</p>
-                              <label className="btn-primary py-1.5 px-4 text-xs cursor-pointer inline-flex items-center gap-1.5">
-                                <Upload className="w-3.5 h-3.5" /> Select Screenshot File
-                                <input type="file" accept="image/*" className="hidden" onChange={(e) => handleScreenshotUpload(order.id, e)} />
-                              </label>
-                              <p className="text-[10px] text-neutral-400 mt-1">Please upload the transaction confirmation image to complete verification.</p>
-                            </div>
-                          )}
-                        </div>
+                        Payment: {order.paymentStatus === 'verified' ? 'Cash on Delivery - Verified ✓' : `Cash on Delivery - Pay ₹${order.total.toLocaleString()} cash upon delivery`}
                       </div>
                     )}
                   </div>
-                )}
+
+                  {order.paymentMethod === 'gpay' && isPaymentExpanded && payment?.status !== 'verified' && (
+                    <div className="bg-neutral-50 rounded-xl p-4 border border-neutral-100 space-y-3 animate-fade-in">
+                      <p className="text-xs font-semibold text-primary text-center">
+                        Scan to pay ₹{order.total.toLocaleString()} via GPay/UPI
+                      </p>
+                      
+                      {/* QR / UPI Display */}
+                      <div className="w-32 h-32 mx-auto bg-white rounded-xl border border-neutral-200 flex flex-col items-center justify-center p-2">
+                        {settings.gpayQR ? (
+                          <img src={settings.gpayQR} alt="GPay QR" className="w-full h-full object-contain rounded-lg" />
+                        ) : (
+                          <div className="text-center p-1">
+                            <Smartphone className="w-8 h-8 text-neutral-300 mx-auto mb-1" />
+                            <span className="text-[9px] text-neutral-400 block">No QR code configured</span>
+                          </div>
+                        )}
+                      </div>
+                      {settings.gpayUPI && (
+                        <p className="text-center text-[11px] text-neutral-500">
+                          UPI ID: <span className="font-semibold text-primary text-xs select-all">{settings.gpayUPI}</span>
+                        </p>
+                      )}
+
+                      {/* Screenshot Section */}
+                      <div className="pt-2 border-t border-neutral-100">
+                        {payment?.screenshot ? (
+                          <div className="space-y-2">
+                            <p className="text-[11px] text-neutral-500 font-medium">Your uploaded screenshot:</p>
+                            <div className="relative w-24 aspect-[3/4] rounded-lg overflow-hidden border border-neutral-200 bg-white">
+                              <img src={payment.screenshot} alt="Screenshot preview" className="w-full h-full object-cover" />
+                              <button
+                                onClick={() => setViewImg(payment.screenshot)}
+                                className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-semibold"
+                              >
+                                View Larger
+                              </button>
+                            </div>
+                            <label className="btn-outline py-1 px-2.5 text-[10px] cursor-pointer inline-flex items-center gap-1 bg-white">
+                              <Upload className="w-3 h-3" /> Change Screenshot
+                              <input type="file" accept="image/*" className="hidden" onChange={(e) => handleScreenshotUpload(order.id, e)} />
+                            </label>
+                          </div>
+                        ) : (
+                          <div>
+                            <p className="text-xs font-semibold text-neutral-600 mb-1.5">Upload Payment Screenshot</p>
+                            <label className="btn-primary py-1.5 px-4 text-xs cursor-pointer inline-flex items-center gap-1.5">
+                              <Upload className="w-3.5 h-3.5" /> Select Screenshot File
+                              <input type="file" accept="image/*" className="hidden" onChange={(e) => handleScreenshotUpload(order.id, e)} />
+                            </label>
+                            <p className="text-[10px] text-neutral-400 mt-1">Please upload the transaction confirmation image to complete verification.</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 {/* Tracking Timeline */}
                 {selectedOrder?.id === order.id && order.status !== 'payment_rejected' && (
