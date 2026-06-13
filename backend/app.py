@@ -308,6 +308,85 @@ def send_brevo_email(to_email, to_name, otp):
         print(f"Error sending Brevo email: {e}")
         return False
 
+def send_pin_otp_email(to_email, otp):
+    api_key = os.environ.get("BREVO_API_KEY")
+    if not api_key:
+        print("BREVO_API_KEY is not configured in .env")
+        return False
+        
+    url = "https://api.brevo.com/v3/smtp/email"
+    headers = {
+        "api-key": api_key,
+        "Content-Type": "application/json",
+        "accept": "application/json"
+    }
+    
+    try:
+        settings = sheets_db.get_settings()
+        site_name = settings.get('siteName', 'PSP garments and clothing')
+        site_logo = settings.get('logo')
+        sender_email = os.environ.get("BREVO_SENDER_EMAIL", settings.get('email', 'shanthiprabaa@gmail.com'))
+        sender_name = os.environ.get("BREVO_SENDER_NAME", f"{site_name} Support")
+    except Exception:
+        site_name = 'PSP garments and clothing'
+        site_logo = None
+        sender_email = os.environ.get("BREVO_SENDER_EMAIL", "shanthiprabaa@gmail.com")
+        sender_name = os.environ.get("BREVO_SENDER_NAME", "PSP garments and clothing Support")
+        
+    logo_html = f'<img src="{site_logo}" alt="{site_name}" style="max-height: 80px; margin-bottom: 10px;" />' if site_logo else f'<h1 style="color: #1A1A2E; margin: 0; font-family: \'Playfair Display\', Georgia, serif; font-size: 28px;">{site_name}</h1>'
+    
+    data = {
+        "sender": {
+            "name": sender_name,
+            "email": sender_email
+        },
+        "to": [
+            {
+              "email": to_email,
+              "name": "Admin User"
+            }
+        ],
+        "subject": f"Security PIN Verification OTP - {site_name}",
+        "htmlContent": f"""
+        <html>
+            <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; background-color: #F5F0EB; padding: 40px 20px;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid #E5E0DA;">
+                    <div style="background-color: #1A1A2E; padding: 30px; text-align: center; color: #ffffff;">
+                        {logo_html}
+                        <h2 style="margin: 10px 0 0 0; font-size: 20px; font-weight: 600; font-family: 'Outfit', sans-serif; letter-spacing: 0.5px;">Security Control Panel</h2>
+                    </div>
+                    <div style="padding: 40px 30px;">
+                        <h3 style="color: #1A1A2E; margin-top: 0; font-size: 18px; font-family: 'Outfit', sans-serif;">PIN Change Verification</h3>
+                        <p style="font-size: 14px; color: #555; margin-bottom: 25px;">A request was made to set or change the access Security PIN for the orders and payments tabs. Please use the verification code below to authorize this update.</p>
+                        
+                        <div style="background-color: #F9F7F5; border-radius: 12px; padding: 20px 30px; text-align: center; margin-bottom: 25px; border: 1px dashed #D0C9C0;">
+                            <span style="font-family: monospace; font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #1A1A2E;">{otp}</span>
+                        </div>
+                        
+                        <p style="font-size: 12px; color: #888;">This OTP is valid for the next 5 minutes. If you did not request this update, you can safely ignore this email.</p>
+                    </div>
+                    <div style="background-color: #F9F7F5; padding: 20px; text-align: center; font-size: 12px; color: #888; border-top: 1px solid #E5E0DA;">
+                        <p style="margin: 0;">&copy; {site_name}. All rights reserved.</p>
+                    </div>
+                </div>
+            </body>
+        </html>
+        """
+    }
+    
+    try:
+        import ssl
+        ctx = ssl._create_unverified_context()
+        req = urllib.request.Request(url, data=json.dumps(data).encode('utf-8'), headers=headers, method='POST')
+        with urllib.request.urlopen(req, context=ctx) as response:
+            res_data = response.read().decode('utf-8')
+            print(f"Brevo security PIN OTP email sent successfully: {res_data}")
+            return True
+    except Exception as e:
+        print(f"Error sending Brevo security PIN OTP email: {e}")
+        return False
+
+
 def send_order_email(order, event_type):
     api_key = os.environ.get("BREVO_API_KEY")
     if not api_key:
@@ -1182,6 +1261,7 @@ def verify_payment():
 @app.route('/api/settings', methods=['GET'])
 def get_site_settings():
     settings = sheets_db.get_settings()
+    settings.pop('adminSecurityPin', None)  # Strip out secure PIN from public API
     return jsonify(settings), 200
 
 @app.route('/api/settings/update', methods=['POST'])
@@ -1191,6 +1271,8 @@ def edit_site_settings():
     # Process base64 uploads in settings (logo, upiQrCode, loginBg, etc.)
     processed_data = {}
     for k, v in data.items():
+        if k == 'adminSecurityPin':
+            continue  # Block changing PIN through generic settings update
         if isinstance(v, str) and (v.startswith("data:image/") or v.startswith("data:video/")):
             processed_data[k] = save_base64_file(v)
         else:
@@ -1198,6 +1280,82 @@ def edit_site_settings():
             
     sheets_db.update_settings(processed_data)
     return jsonify({"message": "Settings updated"}), 200
+
+# ==========================================
+# ACCESS SECURITY PIN MANAGEMENT
+# ==========================================
+
+import time
+import random
+
+pin_otps = {}
+
+@app.route('/api/settings/request-pin-otp', methods=['POST'])
+def request_pin_otp():
+    # Send the OTP code to the test email gokulnath96880@gmail.com
+    test_email = "gokulnath96880@gmail.com"
+    
+    otp = str(random.randint(100000, 999999))
+    expires_at = time.time() + 300  # 5 minutes validity
+    
+    pin_otps['active_otp'] = {
+        "code": otp,
+        "expires_at": expires_at
+    }
+    
+    success = send_pin_otp_email(test_email, otp)
+    if success:
+        return jsonify({"message": "OTP sent successfully to gokulnath96880@gmail.com"}), 200
+    else:
+        return jsonify({"error": "Failed to send OTP email"}), 500
+
+@app.route('/api/settings/verify-and-update-pin', methods=['POST'])
+def verify_and_update_pin():
+    data = request.json
+    otp_code = data.get('otp')
+    new_pin = data.get('pin')
+    
+    if not otp_code or not new_pin:
+        return jsonify({"error": "OTP and New PIN are required"}), 400
+        
+    active = pin_otps.get('active_otp')
+    if not active:
+        return jsonify({"error": "No active OTP found. Please request a new OTP"}), 400
+        
+    if time.time() > active['expires_at']:
+        pin_otps.pop('active_otp', None)
+        return jsonify({"error": "OTP has expired. Please request a new one"}), 400
+        
+    if active['code'] != otp_code:
+        return jsonify({"error": "Invalid OTP code"}), 400
+        
+    # Clear the verified OTP
+    pin_otps.pop('active_otp', None)
+    
+    # Update PIN in settings database
+    try:
+        sheets_db.update_settings({"adminSecurityPin": str(new_pin)})
+        return jsonify({"message": "Security PIN updated successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": f"Failed to save PIN: {str(e)}"}), 500
+
+@app.route('/api/settings/verify-pin', methods=['POST'])
+def verify_admin_pin():
+    data = request.json
+    entered_pin = data.get('pin')
+    
+    if not entered_pin:
+        return jsonify({"error": "PIN is required"}), 400
+        
+    try:
+        settings = sheets_db.get_settings()
+        stored_pin = settings.get('adminSecurityPin', '1234')  # Default PIN is '1234'
+        if str(entered_pin) == str(stored_pin):
+            return jsonify({"success": True}), 200
+        else:
+            return jsonify({"success": False, "error": "Invalid security PIN"}), 400
+    except Exception as e:
+        return jsonify({"error": "Failed to verify PIN"}), 500
 
 # ==========================================
 # SERVER INITIATION

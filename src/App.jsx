@@ -36,6 +36,7 @@ import AdminCoupons from './admin/AdminCoupons';
 import AdminReviews from './admin/AdminReviews';
 import AdminCustomers from './admin/AdminCustomers';
 import AdminSettings from './admin/AdminSettings';
+import SecureAdminTab from './admin/SecureAdminTab';
 
 // Protected route wrappers
 const ProtectedRoute = ({ children }) => {
@@ -123,8 +124,8 @@ const App = () => {
                     <Route path="products" element={<AdminProducts />} />
                     <Route path="categories" element={<AdminCategories />} />
                     <Route path="inventory" element={<AdminInventory />} />
-                    <Route path="orders" element={<AdminOrders />} />
-                    <Route path="payments" element={<AdminPayments />} />
+                    <Route path="orders" element={<SecureAdminTab><AdminOrders /></SecureAdminTab>} />
+                    <Route path="payments" element={<SecureAdminTab><AdminPayments /></SecureAdminTab>} />
                     <Route path="banners" element={<AdminBanners />} />
                     <Route path="coupons" element={<AdminCoupons />} />
                     <Route path="reviews" element={<AdminReviews />} />

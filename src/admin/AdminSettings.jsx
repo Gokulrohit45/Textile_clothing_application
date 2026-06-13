@@ -5,6 +5,8 @@ import { useSettings } from '../context/SettingsContext';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 const DEFAULT_SIZE_GUIDE = [
   { size: 'S', chest: '38 in', length: '27 in', shoulder: '17.5 in' },
   { size: 'M', chest: '40 in', length: '28 in', shoulder: '18 in' },
@@ -18,6 +20,70 @@ const AdminSettings = () => {
   const { user, updateProfile } = useAuth();
   const [form, setForm] = useState({ ...settings });
   const [activeTab, setActiveTab] = useState('general');
+
+  const [otpSent, setOtpSent] = useState(false);
+  const [requestingOtp, setRequestingOtp] = useState(false);
+  const [updatingPin, setUpdatingPin] = useState(false);
+  const [pinForm, setPinForm] = useState({
+    otp: '',
+    pin: '',
+    confirmPin: ''
+  });
+
+  const handleRequestOtp = async () => {
+    setRequestingOtp(true);
+    try {
+      const res = await fetch(`${API_URL}/settings/request-pin-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (res.ok) {
+        setOtpSent(true);
+        toast.success('Verification OTP code sent to gokulnath96880@gmail.com');
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Failed to send OTP.');
+      }
+    } catch (err) {
+      toast.error('Server connection failed.');
+    } finally {
+      setRequestingOtp(false);
+    }
+  };
+
+  const handleUpdatePin = async () => {
+    if (pinForm.pin.length !== 4) {
+      toast.error('PIN must be exactly 4 digits.');
+      return;
+    }
+    if (pinForm.pin !== pinForm.confirmPin) {
+      toast.error('PINs do not match.');
+      return;
+    }
+    setUpdatingPin(true);
+    try {
+      const res = await fetch(`${API_URL}/settings/verify-and-update-pin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          otp: pinForm.otp,
+          pin: pinForm.pin
+        })
+      });
+      if (res.ok) {
+        toast.success('Security Access PIN updated successfully!');
+        setOtpSent(false);
+        setPinForm({ otp: '', pin: '', confirmPin: '' });
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Failed to update PIN.');
+      }
+    } catch (err) {
+      toast.error('Server connection failed.');
+    } finally {
+      setUpdatingPin(false);
+    }
+  };
 
   const [adminForm, setAdminForm] = useState({
     name: user?.name || '',
@@ -205,6 +271,8 @@ const AdminSettings = () => {
   const handleSave = async () => {
     if (activeTab === 'admin-account') {
       await handleSaveAdminCredentials();
+    } else if (activeTab === 'security-pin') {
+      return;
     } else {
       updateSettings(form);
     }
@@ -217,6 +285,7 @@ const AdminSettings = () => {
     { id: 'policies', label: 'Policies' },
     { id: 'offers', label: 'Offers & Promo Banners' },
     { id: 'admin-account', label: 'Admin Credentials' },
+    { id: 'security-pin', label: 'Access PIN Security' },
   ];
 
   return (
@@ -226,9 +295,11 @@ const AdminSettings = () => {
           <h2 className="font-display font-bold text-xl text-primary">Website Settings</h2>
           <p className="text-neutral-400 text-sm">Manage your store configuration</p>
         </div>
-        <button id="save-settings-btn" onClick={handleSave} className="btn-primary gap-2">
-          <Save className="w-4 h-4" /> Save Changes
-        </button>
+        {activeTab !== 'security-pin' && (
+          <button id="save-settings-btn" onClick={handleSave} className="btn-primary gap-2">
+            <Save className="w-4 h-4" /> Save Changes
+          </button>
+        )}
       </div>
 
       {/* Tabs */}
@@ -636,13 +707,100 @@ const AdminSettings = () => {
             </div>
           </div>
         )}
+
+        {activeTab === 'security-pin' && (
+          <div className="space-y-5 animate-fade-in">
+            <h3 className="font-semibold text-primary mb-2">Access PIN Security</h3>
+            <p className="text-xs text-neutral-400 mb-6 leading-relaxed">
+              Restrict access to the sensitive **Orders** and **Payments** dashboards by setting a Security PIN. 
+              To set, update, or change the PIN, request an OTP verification code. It will be sent to the test email address <strong>gokulnath96880@gmail.com</strong>.
+            </p>
+
+            {!otpSent ? (
+              <div className="space-y-4 max-w-md">
+                <button
+                  type="button"
+                  onClick={handleRequestOtp}
+                  disabled={requestingOtp}
+                  className="btn-primary gap-2"
+                >
+                  {requestingOtp ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : null}
+                  {requestingOtp ? 'Sending OTP...' : 'Send Verification OTP to Email'}
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-5 max-w-md border border-neutral-100 bg-neutral-50/50 rounded-2xl p-6">
+                <div className="bg-primary/5 text-primary text-xs rounded-xl px-4 py-3 border border-primary/10">
+                  A verification OTP code was successfully sent to your test inbox: <strong>gokulnath96880@gmail.com</strong>
+                </div>
+
+                <div>
+                  <label className="label">Verification OTP Code (6 Digits)</label>
+                  <input
+                    type="text"
+                    maxLength={6}
+                    placeholder="Enter 6-digit OTP code"
+                    className="input font-mono tracking-widest text-lg"
+                    value={pinForm.otp}
+                    onChange={e => setPinForm(p => ({ ...p, otp: e.target.value.replace(/\D/g, '') }))}
+                  />
+                </div>
+
+                <div>
+                  <label className="label">New Security Access PIN (4 Digits)</label>
+                  <input
+                    type="password"
+                    maxLength={4}
+                    placeholder="Enter 4-digit PIN"
+                    className="input font-mono tracking-widest text-lg"
+                    value={pinForm.pin}
+                    onChange={e => setPinForm(p => ({ ...p, pin: e.target.value.replace(/\D/g, '') }))}
+                  />
+                </div>
+
+                <div>
+                  <label className="label">Confirm New PIN</label>
+                  <input
+                    type="password"
+                    maxLength={4}
+                    placeholder="Re-enter 4-digit PIN"
+                    className="input font-mono tracking-widest text-lg"
+                    value={pinForm.confirmPin}
+                    onChange={e => setPinForm(p => ({ ...p, confirmPin: e.target.value.replace(/\D/g, '') }))}
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={handleUpdatePin}
+                    disabled={updatingPin || !pinForm.otp || !pinForm.pin || pinForm.pin !== pinForm.confirmPin}
+                    className="btn-primary gap-2 flex-1"
+                  >
+                    {updatingPin ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : null}
+                    {updatingPin ? 'Updating PIN...' : 'Verify & Save PIN'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setOtpSent(false); setPinForm({ otp: '', pin: '', confirmPin: '' }); }}
+                    className="btn-outline text-neutral-500 border-neutral-300"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      <div className="flex justify-end">
-        <button onClick={handleSave} className="btn-primary gap-2">
-          <Save className="w-4 h-4" /> Save All Settings
-        </button>
-      </div>
+      {activeTab !== 'security-pin' && (
+        <div className="flex justify-end">
+          <button onClick={handleSave} className="btn-primary gap-2">
+            <Save className="w-4 h-4" /> Save All Settings
+          </button>
+        </div>
+      )}
     </div>
   );
 };
