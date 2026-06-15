@@ -3,10 +3,11 @@ import { Search, ChevronDown, Printer, Eye, X } from 'lucide-react';
 import { useOrder } from '../context/OrderContext';
 import { useSettings } from '../context/SettingsContext';
 
-const STATUSES = ['pending', 'processing', 'shipped', 'delivered', 'payment_rejected'];
+const STATUSES = ['pending', 'processing', 'shipped', 'delivered', 'payment_rejected', 'return_pending', 'return_approved', 'return_rejected'];
 const STATUS_COLOR = {
   pending: 'badge-warning', processing: 'badge-primary', shipped: 'badge-neutral',
-  delivered: 'badge-success', payment_rejected: 'badge-danger'
+  delivered: 'badge-success', payment_rejected: 'badge-danger',
+  return_pending: 'badge-warning', return_approved: 'badge-success', return_rejected: 'badge-danger'
 };
 
 const AdminOrders = () => {
@@ -17,6 +18,27 @@ const AdminOrders = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [trackingInput, setTrackingInput] = useState('');
   const [selectedMonth, setSelectedMonth] = useState('all');
+
+  // Rejection details state
+  const [rejectionMode, setRejectionMode] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState('');
+
+  const handleApproveReturn = async (orderId) => {
+    const success = await updateOrderStatus(orderId, 'return_approved');
+    if (success) {
+      setSelectedOrder(prev => prev ? { ...prev, status: 'return_approved' } : null);
+    }
+  };
+
+  const handleRejectReturn = async (orderId) => {
+    if (!rejectionReason.trim()) return;
+    const success = await updateOrderStatus(orderId, 'return_rejected', null, { returnReason: rejectionReason.trim() });
+    if (success) {
+      setSelectedOrder(prev => prev ? { ...prev, status: 'return_rejected', returnReason: rejectionReason.trim() } : null);
+      setRejectionMode(false);
+      setRejectionReason('');
+    }
+  };
 
   const filtered = orders.filter(o => {
     const matchStatus = statusFilter === 'all' || o.status === statusFilter;
@@ -42,7 +64,13 @@ const AdminOrders = () => {
   };
 
   const handleStatusUpdate = (orderId, status) => {
-    updateOrderStatus(orderId, status, status === 'shipped' ? trackingInput || undefined : undefined);
+    if (status === 'return_rejected') {
+      const reason = prompt('Please enter the reason for rejecting the return:');
+      if (reason === null) return;
+      updateOrderStatus(orderId, status, undefined, { returnReason: reason.trim() });
+    } else {
+      updateOrderStatus(orderId, status, status === 'shipped' ? trackingInput || undefined : undefined);
+    }
     setTrackingInput('');
   };
 
@@ -326,9 +354,9 @@ const AdminOrders = () => {
                       value={order.status}
                       onChange={e => handleStatusUpdate(order.id, e.target.value)}
                       className={`text-xs font-semibold px-2 py-1 rounded-lg border-0 outline-none cursor-pointer ${
-                        order.status === 'delivered' ? 'bg-success/10 text-success' :
+                        order.status === 'delivered' || order.status === 'return_approved' ? 'bg-success/10 text-success' :
                         order.status === 'shipped' ? 'bg-primary/10 text-primary' :
-                        order.status === 'payment_rejected' ? 'bg-danger/10 text-danger' :
+                        order.status === 'payment_rejected' || order.status === 'return_rejected' ? 'bg-danger/10 text-danger' :
                         order.status === 'processing' ? 'bg-blue-50 text-blue-600' :
                         'bg-warning/10 text-warning'
                       }`}
@@ -401,6 +429,75 @@ const AdminOrders = () => {
                 <div className="flex justify-between font-bold text-primary border-t border-neutral-200 pt-2 mt-2"><span>Total</span><span>₹{selectedOrder.total?.toLocaleString()}</span></div>
               </div>
 
+              {/* Return request details */}
+              {(selectedOrder.status === 'return_pending' || selectedOrder.customerReturnReason) && (
+                <div className="bg-neutral-50 rounded-xl p-4 border border-neutral-100 space-y-3">
+                  <p className="text-xs font-semibold text-neutral-500 uppercase">Return Status Details</p>
+                  
+                  {selectedOrder.customerReturnReason && (
+                    <p className="text-sm text-primary"><strong>Customer Reason:</strong> {selectedOrder.customerReturnReason}</p>
+                  )}
+
+                  {selectedOrder.status === 'return_pending' && (
+                    <div className="space-y-3 pt-2 border-t border-neutral-100">
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => handleApproveReturn(selectedOrder.id)}
+                          className="bg-success text-white py-1.5 px-3 rounded-lg text-xs font-semibold hover:bg-success-dark transition-colors"
+                        >
+                          Approve Return
+                        </button>
+                        <button 
+                          onClick={() => setRejectionMode(true)}
+                          className="bg-danger text-white py-1.5 px-3 rounded-lg text-xs font-semibold hover:bg-danger-dark transition-colors"
+                        >
+                          Reject Return
+                        </button>
+                      </div>
+
+                      {rejectionMode && (
+                        <div className="space-y-2 pt-2 border-t border-dashed border-neutral-200 animate-fade-in">
+                          <textarea
+                            className="input text-xs"
+                            placeholder="Type reason for rejection..."
+                            value={rejectionReason}
+                            onChange={e => setRejectionReason(e.target.value)}
+                            rows={2}
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleRejectReturn(selectedOrder.id)}
+                              className="btn-primary py-1 px-3 text-xs"
+                              disabled={!rejectionReason.trim()}
+                            >
+                              Submit Rejection
+                            </button>
+                            <button
+                              onClick={() => { setRejectionMode(false); setRejectionReason(''); }}
+                              className="btn-ghost py-1 px-3 text-xs"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {selectedOrder.status === 'return_rejected' && (
+                    <p className="text-sm text-danger font-medium">
+                      <strong>Rejection Reason:</strong> {selectedOrder.returnReason || 'No reason provided.'}
+                    </p>
+                  )}
+
+                  {selectedOrder.status === 'return_approved' && (
+                    <p className="text-sm text-success font-medium">
+                      ✓ Return request approved
+                    </p>
+                  )}
+                </div>
+              )}
+
               {/* Update Status */}
               <div>
                 <p className="text-xs font-semibold text-neutral-500 uppercase mb-2">Update Status</p>
@@ -408,7 +505,17 @@ const AdminOrders = () => {
                   {STATUSES.map(status => (
                     <button
                       key={status}
-                      onClick={() => { handleStatusUpdate(selectedOrder.id, status); setSelectedOrder({ ...selectedOrder, status }); }}
+                      onClick={() => { 
+                        if (status === 'return_rejected') {
+                          const reason = prompt('Please enter the reason for rejecting the return:');
+                          if (reason === null) return;
+                          updateOrderStatus(selectedOrder.id, status, null, { returnReason: reason.trim() });
+                          setSelectedOrder({ ...selectedOrder, status, returnReason: reason.trim() });
+                        } else {
+                          handleStatusUpdate(selectedOrder.id, status); 
+                          setSelectedOrder({ ...selectedOrder, status });
+                        }
+                      }}
                       className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all border ${
                         selectedOrder.status === status ? 'bg-primary text-white border-primary' : 'border-neutral-200 text-neutral-600 hover:border-primary'
                       }`}

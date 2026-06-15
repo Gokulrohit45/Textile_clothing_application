@@ -55,7 +55,7 @@ export const OrderProvider = ({ children }) => {
     }
   };
 
-  const updateOrderStatus = async (orderId, status, trackingId = null) => {
+  const updateOrderStatus = async (orderId, status, trackingId = null, extraParams = {}) => {
     try {
       const res = await fetch(`${API_URL}/orders/update-status`, {
         method: 'POST',
@@ -64,7 +64,8 @@ export const OrderProvider = ({ children }) => {
           id: orderId,
           status,
           trackingId,
-          updatedAt: new Date().toISOString().split('T')[0]
+          updatedAt: new Date().toISOString().split('T')[0],
+          ...extraParams
         }),
       });
       if (res.ok) {
@@ -75,13 +76,17 @@ export const OrderProvider = ({ children }) => {
                 status, 
                 trackingId: trackingId || o.trackingId, 
                 paymentStatus: status === 'delivered' ? 'verified' : o.paymentStatus,
-                updatedAt: new Date().toISOString().split('T')[0] 
+                updatedAt: new Date().toISOString().split('T')[0],
+                ...extraParams
               }
             : o
         ));
+        return true;
       }
+      return false;
     } catch (err) {
       console.error('Update order status error:', err);
+      return false;
     }
   };
 

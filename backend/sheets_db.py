@@ -26,7 +26,7 @@ SCHEMAS = {
     'banners': ['id', 'title', 'subtitle', 'cta', 'ctaLink', 'image', 'bgColor', 'textColor', 'status', 'order'],
     'coupons': ['id', 'code', 'type', 'value', 'minOrder', 'maxUses', 'usedCount', 'expiresAt', 'status'],
     'reviews': ['id', 'productId', 'userId', 'userName', 'rating', 'comment', 'createdAt', 'status'],
-    'orders': ['id', 'userId', 'userName', 'addressId', 'items', 'subtotal', 'discount', 'shipping', 'total', 'paymentMethod', 'paymentStatus', 'paymentScreenshot', 'status', 'trackingId', 'couponCode', 'createdAt', 'updatedAt'],
+    'orders': ['id', 'userId', 'userName', 'addressId', 'items', 'subtotal', 'discount', 'shipping', 'total', 'paymentMethod', 'paymentStatus', 'paymentScreenshot', 'status', 'trackingId', 'couponCode', 'createdAt', 'updatedAt', 'returnReason', 'customerReturnReason'],
     'payments': ['id', 'orderId', 'method', 'amount', 'screenshot', 'status', 'verifiedAt'],
     'settings': ['key', 'value']
 }

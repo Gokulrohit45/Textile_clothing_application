@@ -1175,6 +1175,10 @@ def update_order_status():
     }
     if tracking_id:
         update_data["trackingId"] = tracking_id
+    if 'returnReason' in data:
+        update_data["returnReason"] = data.get('returnReason')
+    if 'customerReturnReason' in data:
+        update_data["customerReturnReason"] = data.get('customerReturnReason')
     if status == 'delivered':
         update_data["paymentStatus"] = "verified"
         

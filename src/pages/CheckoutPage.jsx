@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Check, ChevronRight, ChevronLeft, Plus, Upload, Smartphone, Truck } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -17,8 +17,16 @@ const CheckoutPage = () => {
   const { settings } = useSettings();
   const { validateCoupon } = useProduct();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [step, setStep] = useState(0);
+
+  const handleCancelCheckout = () => {
+    const searchParams = new URLSearchParams(location.search);
+    const fromProductParam = searchParams.get('fromProduct');
+    const dest = location.state?.fromProduct || fromProductParam || sessionStorage.getItem('lastProductPage') || '/cart';
+    navigate(dest);
+  };
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [newAddrMode, setNewAddrMode] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('gpay');
@@ -173,7 +181,14 @@ const CheckoutPage = () => {
                 </div>
               )}
 
-              <div className="flex justify-end mt-6">
+              <div className="flex justify-between items-center mt-6">
+                <button
+                  type="button"
+                  onClick={handleCancelCheckout}
+                  className="btn-ghost text-neutral-500 hover:text-primary gap-1"
+                >
+                  Cancel
+                </button>
                 <button
                   id="checkout-next-1"
                   disabled={!selectedAddress}
@@ -189,7 +204,10 @@ const CheckoutPage = () => {
           {/* STEP 1: Order Summary */}
           {step === 1 && (
             <div className="card p-6 animate-fade-in">
-              <h2 className="font-semibold text-lg text-primary mb-4">Order Summary</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-semibold text-lg text-primary">Order Summary</h2>
+                <button onClick={() => setStep(0)} className="btn-ghost btn-sm gap-1"><ChevronLeft className="w-4 h-4" /> Back</button>
+              </div>
               <div className="space-y-3 mb-4">
                 {cartItems.map(item => (
                   <div key={item.key} className="flex gap-3 pb-3 border-b border-neutral-100 last:border-0">
@@ -202,9 +220,8 @@ const CheckoutPage = () => {
                   </div>
                 ))}
               </div>
-              <div className="flex gap-2 justify-between mt-4">
-                <button onClick={() => setStep(0)} className="btn-ghost gap-1"><ChevronLeft className="w-4 h-4" /> Back</button>
-                <button id="checkout-next-2" onClick={() => setStep(2)} className="btn-primary gap-2">
+              <div className="flex justify-end mt-4">
+                <button id="checkout-next-2" onClick={() => setStep(2)} className="btn-primary gap-2 w-full md:w-auto">
                   Choose Payment <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
@@ -214,7 +231,10 @@ const CheckoutPage = () => {
           {/* STEP 2: Payment */}
           {step === 2 && (
             <div className="card p-6 animate-fade-in">
-              <h2 className="font-semibold text-lg text-primary mb-4">Payment Method</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-semibold text-lg text-primary">Payment Method</h2>
+                <button onClick={() => setStep(1)} className="btn-ghost btn-sm gap-1"><ChevronLeft className="w-4 h-4" /> Back</button>
+              </div>
 
               <div className="space-y-3 mb-6">
                 {/* GPay */}
@@ -289,13 +309,12 @@ const CheckoutPage = () => {
                 </div>
               )}
 
-              <div className="flex gap-2 justify-between">
-                <button onClick={() => setStep(1)} className="btn-ghost gap-1"><ChevronLeft className="w-4 h-4" /> Back</button>
+              <div className="flex justify-end">
                 <button
                   id="place-order-btn"
                   onClick={handlePlaceOrder}
                   disabled={placing || (paymentMethod === 'gpay' && !screenshot)}
-                  className="btn-accent gap-2"
+                  className="btn-accent gap-2 w-full md:w-auto"
                 >
                   {placing ? (
                     <><span className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" /> Placing...</>

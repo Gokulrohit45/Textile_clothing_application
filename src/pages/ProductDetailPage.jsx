@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { ShoppingBag, Heart, Share2, ChevronLeft, ChevronRight, Star, Truck, RefreshCw, Shield, Minus, Plus, Check, Play } from 'lucide-react';
 import { useProduct } from '../context/ProductContext';
@@ -38,6 +38,12 @@ const ProductDetailPage = () => {
   const { user, isLoggedIn } = useAuth();
   const { settings } = useSettings();
   const { getOrdersByUser } = useOrder();
+  
+  useEffect(() => {
+    if (id) {
+      sessionStorage.setItem('lastProductPage', `/product/${id}`);
+    }
+  }, [id]);
   
   const searchParams = new URLSearchParams(location.search);
   const initialTab = searchParams.get('tab') === 'reviews' ? 'reviews' : 'description';
@@ -137,9 +143,9 @@ const ProductDetailPage = () => {
     if (!selectedSize) { toast.error('Please select a size'); return; }
     addToCart(product, selectedSize, selectedColorHex, selectedColor, qty);
     if (isLoggedIn) {
-      navigate('/checkout');
+      navigate('/checkout', { state: { fromProduct: `/product/${id}` } });
     } else {
-      navigate('/login?redirect=/checkout');
+      navigate(`/login?redirect=${encodeURIComponent(`/checkout?fromProduct=/product/${id}`)}`);
     }
   };
 
