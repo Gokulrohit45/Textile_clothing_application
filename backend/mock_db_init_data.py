@@ -296,10 +296,10 @@ mockBanners = [
 ]
 
 mockCoupons = [
-  { "id": "c1", "code": "WELCOME10", "type": "percentage", "value": 10, "minOrder": 500, "maxUses": 1000, "usedCount": 234, "expiresAt": "2025-12-31", "status": "active" },
-  { "id": "c2", "code": "FLAT200", "type": "fixed", "value": 200, "minOrder": 1500, "maxUses": 500, "usedCount": 87, "expiresAt": "2025-12-31", "status": "active" },
-  { "id": "c3", "code": "FREESHIP", "type": "shipping", "value": 100, "minOrder": 999, "maxUses": 2000, "usedCount": 412, "expiresAt": "2025-09-30", "status": "active" },
-  { "id": "c4", "code": "SUMMER20", "type": "percentage", "value": 20, "minOrder": 1000, "maxUses": 300, "usedCount": 298, "expiresAt": "2025-08-31", "status": "inactive" }
+  { "id": "c1", "code": "WELCOME10", "type": "percentage", "value": 10, "minOrder": 500, "maxUses": 1000, "usedCount": 234, "startsAt": "2024-01-01", "expiresAt": "2025-12-31", "status": "active" },
+  { "id": "c2", "code": "FLAT200", "type": "fixed", "value": 200, "minOrder": 1500, "maxUses": 500, "usedCount": 87, "startsAt": "2024-01-01", "expiresAt": "2025-12-31", "status": "active" },
+  { "id": "c3", "code": "FREESHIP", "type": "shipping", "value": 100, "minOrder": 999, "maxUses": 2000, "usedCount": 412, "startsAt": "2024-01-01", "expiresAt": "2025-09-30", "status": "active" },
+  { "id": "c4", "code": "SUMMER20", "type": "percentage", "value": 20, "minOrder": 1000, "maxUses": 300, "usedCount": 298, "startsAt": "2024-01-01", "expiresAt": "2025-08-31", "status": "inactive" }
 ]
 
 mockReviews = [

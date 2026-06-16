@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 
 const CartPage = () => {
   const { cartItems, updateQty, removeFromCart, appliedCoupon, applyCoupon, removeCoupon, subtotal, getDiscount, getShippingDiscount } = useCart();
-  const { validateCoupon } = useProduct();
+  const { validateCoupon, coupons } = useProduct();
   const { settings } = useSettings();
   const navigate = useNavigate();
   const [couponCode, setCouponCode] = useState('');
@@ -19,8 +19,10 @@ const CartPage = () => {
   const effectiveShipping = Math.max(0, shipping - shippingDiscount);
   const total = subtotal - discount + effectiveShipping;
 
-  const handleApplyCoupon = () => {
-    const result = validateCoupon(couponCode, subtotal);
+  const handleApplyCoupon = (codeToApply) => {
+    const code = (typeof codeToApply === 'string' ? codeToApply : couponCode).trim().toUpperCase();
+    if (!code) { toast.error('Please enter a coupon code'); return; }
+    const result = validateCoupon(code, subtotal);
     if (!result.valid) { toast.error(result.error); return; }
     applyCoupon(result.coupon);
     toast.success(`Coupon "${result.coupon.code}" applied!`);
@@ -149,17 +151,36 @@ const CartPage = () => {
                   </button>
                 </div>
               )}
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {['WELCOME10', 'FLAT200', 'FREESHIP'].map(code => (
-                  <button
-                    key={code}
-                    onClick={() => setCouponCode(code)}
-                    className="text-xs text-accent-700 bg-accent/10 px-2 py-0.5 rounded-full hover:bg-accent/20 transition-colors"
-                  >
-                    {code}
-                  </button>
-                ))}
-              </div>
+              {coupons && coupons.filter(c => c.status === 'active').length > 0 && (
+                <div className="mt-3">
+                  <p className="text-[11px] font-bold text-neutral-400 tracking-wider mb-2">AVAILABLE COUPONS</p>
+                  <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
+                    {coupons.filter(c => c.status === 'active').map(c => {
+                      const desc = c.type === 'percentage' ? `${c.value}% OFF` :
+                                   c.type === 'fixed' ? `₹${c.value} OFF` : 'FREE SHIPPING';
+                      return (
+                        <div key={c.id} className="flex items-center justify-between p-2 rounded-xl bg-neutral-50 border border-neutral-200/60 hover:bg-neutral-100/50 transition-all">
+                          <div className="min-w-0 flex-1 pr-2">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-mono font-bold text-xs text-primary bg-neutral-200/70 px-1.5 py-0.5 rounded uppercase tracking-wider">{c.code}</span>
+                              <span className="text-xs font-semibold text-accent-700">{desc}</span>
+                            </div>
+                            <p className="text-[10px] text-neutral-500 mt-1">
+                              Min. order: <span className="font-medium text-neutral-700">₹{c.minOrder}</span>
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => handleApplyCoupon(c.code)}
+                            className="btn-outline btn-xs px-2.5 py-1 text-[11px] font-semibold whitespace-nowrap"
+                          >
+                            Apply
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Price Breakdown */}

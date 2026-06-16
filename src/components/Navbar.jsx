@@ -81,7 +81,7 @@ const Navbar = () => {
                 <ShoppingBag className="w-4 h-4 text-accent" />
               </div>
             )}
-            <span className="font-display font-bold text-xl text-primary tracking-tight">
+            <span className="font-display font-bold text-sm sm:text-base md:text-xl text-primary tracking-tight truncate max-w-[135px] sm:max-w-[240px] md:max-w-none">
               {settings.siteName}
             </span>
           </Link>
@@ -136,7 +136,7 @@ const Navbar = () => {
             </div>
 
             {/* Wishlist */}
-            <Link id="navbar-wishlist" to={isLoggedIn ? "/wishlist" : "/login?redirect=/wishlist"} className="btn-ghost w-10 h-10 rounded-full p-0 justify-center">
+            <Link id="navbar-wishlist" to={isLoggedIn ? "/wishlist" : "/login?redirect=/wishlist"} className="hidden md:flex btn-ghost w-10 h-10 rounded-full p-0 justify-center">
               <Heart className="w-5 h-5" />
             </Link>
 
@@ -151,7 +151,7 @@ const Navbar = () => {
             </Link>
 
             {/* User Menu */}
-            <div className="relative" ref={userMenuRef}>
+            <div className="hidden md:block relative" ref={userMenuRef}>
               <button
                 id="navbar-user-menu"
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
@@ -246,10 +246,40 @@ const Navbar = () => {
                 {link.label}
               </Link>
             ))}
-            {!isLoggedIn && (
-              <Link to="/login" className="btn-primary mt-2 justify-center">
-                Sign In / Register
-              </Link>
+            <div className="h-[1px] bg-neutral-100 my-2" />
+            {isLoggedIn ? (
+              <>
+                <Link to="/profile" className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 hover:bg-neutral-50 hover:text-primary transition-colors flex items-center gap-3">
+                  <User className="w-4 h-4 text-neutral-400" />
+                  My Profile
+                </Link>
+                <Link to="/orders" className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 hover:bg-neutral-50 hover:text-primary transition-colors flex items-center gap-3">
+                  <Package className="w-4 h-4 text-neutral-400" />
+                  My Orders
+                </Link>
+                <Link to="/wishlist" className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 hover:bg-neutral-50 hover:text-primary transition-colors flex items-center gap-3">
+                  <Heart className="w-4 h-4 text-neutral-400" />
+                  My Wishlist
+                </Link>
+                <button
+                  id="navbar-logout-mobile"
+                  onClick={() => { logout(); setMobileOpen(false); navigate('/'); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-danger hover:bg-danger/5 transition-colors text-left"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/wishlist" className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 hover:bg-neutral-50 hover:text-primary transition-colors flex items-center gap-3">
+                  <Heart className="w-4 h-4 text-neutral-400" />
+                  My Wishlist
+                </Link>
+                <Link to="/login" className="btn-accent mt-2 justify-center py-2.5 text-center text-sm font-semibold rounded-xl shadow-btn-gold">
+                  LOGIN / SIGNUP
+                </Link>
+              </>
             )}
           </div>
         </div>

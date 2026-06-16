@@ -384,6 +384,16 @@ export const ProductProvider = ({ children }) => {
   const validateCoupon = (code, orderTotal) => {
     const coupon = coupons.find(c => c.code === code.toUpperCase() && c.status === 'active');
     if (!coupon) return { valid: false, error: 'Invalid coupon code' };
+    
+    // Check coupon schedule dates
+    const currentDate = new Date().toISOString().split('T')[0];
+    if (coupon.startsAt && currentDate < coupon.startsAt) {
+      return { valid: false, error: `This coupon is scheduled to start on ${coupon.startsAt}` };
+    }
+    if (coupon.expiresAt && currentDate > coupon.expiresAt) {
+      return { valid: false, error: 'This coupon has expired' };
+    }
+    
     if (orderTotal < coupon.minOrder) return { valid: false, error: `Minimum order amount is ₹${coupon.minOrder}` };
     if (coupon.usedCount >= coupon.maxUses) return { valid: false, error: 'Coupon limit reached' };
     return { valid: true, coupon };

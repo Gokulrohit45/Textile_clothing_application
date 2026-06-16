@@ -7,11 +7,11 @@ const AdminCoupons = () => {
   const { coupons, addCoupon, updateCoupon, deleteCoupon } = useProduct();
   const [modal, setModal] = useState(false);
   const [editId, setEditId] = useState(null);
-  const [form, setForm] = useState({ code: '', type: 'percentage', value: '', minOrder: '', maxUses: '', expiresAt: '', status: 'active' });
+  const [form, setForm] = useState({ code: '', type: 'percentage', value: '', minOrder: '', maxUses: '', startsAt: '', expiresAt: '', status: 'active' });
 
   const open = (c = null) => {
     setEditId(c?.id || null);
-    setForm(c ? { ...c } : { code: '', type: 'percentage', value: '', minOrder: '', maxUses: '', expiresAt: '', status: 'active' });
+    setForm(c ? { ...c } : { code: '', type: 'percentage', value: '', minOrder: '', maxUses: '', startsAt: '', expiresAt: '', status: 'active' });
     setModal(true);
   };
 
@@ -54,17 +54,21 @@ const AdminCoupons = () => {
                 <button onClick={() => { if (confirm(`Delete ${c.code}?`)) { deleteCoupon(c.id); toast.success('Deleted!'); } }} className="btn-ghost p-1.5 text-danger hover:bg-danger/5"><Trash2 className="w-3.5 h-3.5" /></button>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-2 text-center text-xs">
-              <div className="bg-neutral-50 rounded-xl p-2">
-                <p className="font-semibold text-primary">₹{c.minOrder}</p>
+            <div className="grid grid-cols-4 gap-1.5 text-center text-[10px]">
+              <div className="bg-neutral-50 rounded-xl p-1.5 flex flex-col justify-between">
+                <p className="font-semibold text-primary text-xs">₹{c.minOrder}</p>
                 <p className="text-neutral-400">Min Order</p>
               </div>
-              <div className="bg-neutral-50 rounded-xl p-2">
-                <p className="font-semibold text-primary">{c.usedCount}/{c.maxUses}</p>
+              <div className="bg-neutral-50 rounded-xl p-1.5 flex flex-col justify-between">
+                <p className="font-semibold text-primary text-xs">{c.usedCount}/{c.maxUses}</p>
                 <p className="text-neutral-400">Used</p>
               </div>
-              <div className="bg-neutral-50 rounded-xl p-2">
-                <p className="font-semibold text-primary">{c.expiresAt}</p>
+              <div className="bg-neutral-50 rounded-xl p-1.5 flex flex-col justify-between">
+                <p className="font-semibold text-primary text-xs">{c.startsAt || '-'}</p>
+                <p className="text-neutral-400">Starts</p>
+              </div>
+              <div className="bg-neutral-50 rounded-xl p-1.5 flex flex-col justify-between">
+                <p className="font-semibold text-primary text-xs">{c.expiresAt || '-'}</p>
                 <p className="text-neutral-400">Expires</p>
               </div>
             </div>
@@ -100,7 +104,16 @@ const AdminCoupons = () => {
               <div><label className="label">Value *</label><input type="number" className="input" value={form.value} onChange={e => setForm(p => ({ ...p, value: e.target.value }))} placeholder={form.type === 'percentage' ? 'e.g. 10 (for 10%)' : 'e.g. 200'} /></div>
               <div><label className="label">Min Order (₹)</label><input type="number" className="input" value={form.minOrder} onChange={e => setForm(p => ({ ...p, minOrder: e.target.value }))} /></div>
               <div><label className="label">Max Uses</label><input type="number" className="input" value={form.maxUses} onChange={e => setForm(p => ({ ...p, maxUses: e.target.value }))} /></div>
-              <div><label className="label">Expires At</label><input type="date" className="input" value={form.expiresAt} onChange={e => setForm(p => ({ ...p, expiresAt: e.target.value }))} /></div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="label">Starts At</label>
+                  <input type="date" className="input text-xs" value={form.startsAt || ''} onChange={e => setForm(p => ({ ...p, startsAt: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="label">Expires At</label>
+                  <input type="date" className="input text-xs" value={form.expiresAt || ''} onChange={e => setForm(p => ({ ...p, expiresAt: e.target.value }))} />
+                </div>
+              </div>
               <label className="flex items-center gap-2 cursor-pointer">
                 <div onClick={() => setForm(p => ({ ...p, status: p.status === 'active' ? 'inactive' : 'active' }))} className={`w-10 h-5 rounded-full relative cursor-pointer transition-all ${form.status === 'active' ? 'bg-success' : 'bg-neutral-200'}`}>
                   <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all ${form.status === 'active' ? 'left-5' : 'left-0.5'}`} />

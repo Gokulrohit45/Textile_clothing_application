@@ -37,6 +37,7 @@ import AdminReviews from './admin/AdminReviews';
 import AdminCustomers from './admin/AdminCustomers';
 import AdminSettings from './admin/AdminSettings';
 import SecureAdminTab from './admin/SecureAdminTab';
+import AdminLogs from './admin/AdminLogs';
 
 // Protected route wrappers
 const ProtectedRoute = ({ children }) => {
@@ -130,6 +131,7 @@ const App = () => {
                     <Route path="coupons" element={<AdminCoupons />} />
                     <Route path="reviews" element={<AdminReviews />} />
                     <Route path="customers" element={<AdminCustomers />} />
+                    <Route path="logs" element={<AdminLogs />} />
                     <Route path="settings" element={<AdminSettings />} />
                   </Route>
 

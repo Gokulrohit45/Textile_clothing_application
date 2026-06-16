@@ -3,7 +3,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Package, Tag, BarChart3, ShoppingCart, CreditCard,
   Image, Ticket, Star, Users, Settings, ChevronLeft, Menu, X,
-  AlertTriangle, ShoppingBag, LogOut
+  AlertTriangle, ShoppingBag, LogOut, Activity
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProduct } from '../context/ProductContext';
@@ -21,6 +21,7 @@ const adminNavItems = [
   { to: '/admin/coupons', icon: Ticket, label: 'Coupons' },
   { to: '/admin/reviews', icon: Star, label: 'Reviews' },
   { to: '/admin/customers', icon: Users, label: 'Customers' },
+  { to: '/admin/logs', icon: Activity, label: 'Activity Logs' },
   { to: '/admin/settings', icon: Settings, label: 'Settings' },
 ];
 

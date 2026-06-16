@@ -361,9 +361,18 @@ const OrdersPage = () => {
     {/* Return Request Modal */}
     {returnOrder && (
       <div className="overlay fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-        <div className="bg-white rounded-2xl w-full max-w-md p-6 animate-scale-in" onClick={e => e.stopPropagation()}>
+        <div className="bg-white rounded-2xl w-full max-w-md p-6 animate-scale-in max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
           <h3 className="font-display font-bold text-lg text-primary mb-4">Request Return</h3>
-          <p className="text-xs text-neutral-400 mb-4">Please select a reason for returning Order #{returnOrder.id.toUpperCase()}</p>
+          <p className="text-xs text-neutral-400 mb-3">Please select a reason for returning Order #{returnOrder.id.toUpperCase()}</p>
+          
+          {/* Return Policy Notice */}
+          <div className="bg-neutral-50 rounded-xl p-3 text-xs text-neutral-500 mb-4 border border-neutral-100 leading-relaxed animate-fade-in">
+            <p className="font-semibold text-primary mb-1">📋 Return Policy Notice:</p>
+            <ul className="list-disc pl-4 space-y-0.5">
+              <li>Shipping charges will not be refunded.</li>
+              <li>Once approved, the refund will be processed within 2 to 3 working days after we receive the product.</li>
+            </ul>
+          </div>
           
           <div className="space-y-2 mb-4">
             {[

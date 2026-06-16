@@ -4,6 +4,15 @@ import { SlidersHorizontal, X, ChevronDown, Grid3X3, LayoutList } from 'lucide-r
 import ProductCard from '../components/ProductCard';
 import { useProduct } from '../context/ProductContext';
 
+const PRICE_RANGES = [
+  { id: 'below-299', label: 'Rs. 299 and Below', min: 0, max: 299 },
+  { id: '300-499', label: 'Rs. 300 - Rs. 499', min: 300, max: 499 },
+  { id: '500-699', label: 'Rs. 500 - Rs. 699', min: 500, max: 699 },
+  { id: '700-999', label: 'Rs. 700 - Rs. 999', min: 700, max: 999 },
+  { id: '1000-1499', label: 'Rs. 1000 - Rs. 1499', min: 1000, max: 1499 },
+  { id: '1500-above', label: 'Rs. 1500 and above', min: 1500, max: 999999 }
+];
+
 const CategoryPage = () => {
   const { slug } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -13,7 +22,7 @@ const CategoryPage = () => {
   const subcategories = category ? getSubcategoriesByCategory(category.id) : [];
 
   const [selectedSub, setSelectedSub] = useState('all');
-  const [filters, setFilters] = useState({ sizes: [], colors: [], priceMin: 0, priceMax: 10000 });
+  const [filters, setFilters] = useState({ sizes: [], colors: [], priceRanges: [] });
   const [sort, setSort] = useState('featured');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [gridView, setGridView] = useState(true);
@@ -28,7 +37,14 @@ const CategoryPage = () => {
     .filter(p => selectedSub === 'all' || p.subcategoryId === selectedSub)
     .filter(p => filters.sizes.length === 0 || (p.sizes && p.sizes.some(s => filters.sizes.includes(s))))
     .filter(p => filters.colors.length === 0 || (p.colorNames && p.colorNames.some(c => filters.colors.includes(c))))
-    .filter(p => p.price >= filters.priceMin && p.price <= filters.priceMax)
+    .filter(p => {
+      if (!filters.priceRanges || filters.priceRanges.length === 0) return true;
+      return filters.priceRanges.some(rangeId => {
+        const range = PRICE_RANGES.find(r => r.id === rangeId);
+        if (!range) return false;
+        return p.price >= range.min && p.price <= range.max;
+      });
+    })
     .sort((a, b) => {
       if (sort === 'price-asc') return a.price - b.price;
       if (sort === 'price-desc') return b.price - a.price;
@@ -50,9 +66,9 @@ const CategoryPage = () => {
     }));
   };
 
-  const clearFilters = () => setFilters({ sizes: [], colors: [], priceMin: 0, priceMax: 10000 });
+  const clearFilters = () => setFilters({ sizes: [], colors: [], priceRanges: [] });
 
-  const activeFilterCount = filters.sizes.length + filters.colors.length + (filters.priceMax < 10000 ? 1 : 0);
+  const activeFilterCount = filters.sizes.length + filters.colors.length + (filters.priceRanges ? filters.priceRanges.length : 0);
 
   if (!category) {
     return (
@@ -128,17 +144,23 @@ const CategoryPage = () => {
               <div className="card p-5 space-y-6">
                 {/* Price */}
                 <div>
-                  <h4 className="font-semibold text-sm text-primary mb-3">Price Range</h4>
-                  <div className="flex items-center justify-between text-xs text-neutral-500 mb-2">
-                    <span>₹{filters.priceMin}</span>
-                    <span>₹{filters.priceMax.toLocaleString()}</span>
+                  <h4 className="font-semibold text-sm text-primary mb-3">Price</h4>
+                  <div className="space-y-2.5">
+                    {PRICE_RANGES.map(range => {
+                      const isChecked = filters.priceRanges?.includes(range.id) || false;
+                      return (
+                        <label key={range.id} className="flex items-center gap-3 cursor-pointer text-sm text-neutral-600 hover:text-primary">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => toggleFilter('priceRanges', range.id)}
+                            className="rounded border-neutral-300 text-primary focus:ring-primary h-4 w-4"
+                          />
+                          <span>{range.label}</span>
+                        </label>
+                      );
+                    })}
                   </div>
-                  <input
-                    type="range" min="0" max="10000" step="100"
-                    value={filters.priceMax}
-                    onChange={e => setFilters(prev => ({ ...prev, priceMax: Number(e.target.value) }))}
-                    className="w-full"
-                  />
                 </div>
 
                 {/* Sizes */}

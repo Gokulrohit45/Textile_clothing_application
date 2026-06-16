@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Check, ChevronRight, ChevronLeft, Plus, Upload, Smartphone, Truck } from 'lucide-react';
+import { Check, ChevronRight, ChevronLeft, Plus, Upload, Smartphone, Truck, Tag } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useOrder } from '../context/OrderContext';
@@ -11,15 +11,26 @@ import toast from 'react-hot-toast';
 const STEPS = ['Address', 'Order Summary', 'Payment'];
 
 const CheckoutPage = () => {
-  const { cartItems, subtotal, appliedCoupon, getDiscount, getShippingDiscount, clearCart } = useCart();
+  const { cartItems, subtotal, appliedCoupon, applyCoupon, removeCoupon, getDiscount, getShippingDiscount, clearCart } = useCart();
   const { user, getUserAddresses, addAddress } = useAuth();
   const { placeOrder } = useOrder();
   const { settings } = useSettings();
-  const { validateCoupon } = useProduct();
+  const { validateCoupon, coupons } = useProduct();
   const navigate = useNavigate();
   const location = useLocation();
 
   const [step, setStep] = useState(0);
+  const [couponCode, setCouponCode] = useState('');
+
+  const handleApplyCoupon = (codeToApply) => {
+    const code = (typeof codeToApply === 'string' ? codeToApply : couponCode).trim().toUpperCase();
+    if (!code) { toast.error('Please enter a coupon code'); return; }
+    const result = validateCoupon(code, subtotal);
+    if (!result.valid) { toast.error(result.error); return; }
+    applyCoupon(result.coupon);
+    toast.success(`Coupon "${result.coupon.code}" applied!`);
+    setCouponCode('');
+  };
 
   const handleCancelCheckout = () => {
     const searchParams = new URLSearchParams(location.search);
@@ -331,6 +342,66 @@ const CheckoutPage = () => {
         <div className="lg:col-span-1">
           <div className="card p-5 sticky top-24">
             <h3 className="font-semibold text-primary mb-4">Price Details</h3>
+
+            {/* Coupon Section */}
+            <div className="mb-5">
+              {appliedCoupon ? (
+                <div className="flex items-center justify-between p-3 bg-success/10 rounded-xl border border-success/20 animate-fade-in">
+                  <div className="flex items-center gap-2">
+                    <Tag className="w-4 h-4 text-success" />
+                    <span className="text-sm font-semibold text-success">{appliedCoupon.code}</span>
+                  </div>
+                  <button onClick={() => { removeCoupon(); toast.success('Coupon removed'); }} className="text-xs text-neutral-400 hover:text-danger transition-colors">
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    id="coupon-input"
+                    className="input py-2 text-sm uppercase"
+                    placeholder="Enter coupon code"
+                    value={couponCode}
+                    onChange={e => setCouponCode(e.target.value.toUpperCase())}
+                    onKeyDown={e => e.key === 'Enter' && handleApplyCoupon()}
+                  />
+                  <button id="apply-coupon-btn" onClick={handleApplyCoupon} className="btn-outline btn-sm px-4 whitespace-nowrap">
+                    Apply
+                  </button>
+                </div>
+              )}
+              {coupons && coupons.filter(c => c.status === 'active').length > 0 && (
+                <div className="mt-3">
+                  <p className="text-[11px] font-bold text-neutral-400 tracking-wider mb-2">AVAILABLE COUPONS</p>
+                  <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
+                    {coupons.filter(c => c.status === 'active').map(c => {
+                      const desc = c.type === 'percentage' ? `${c.value}% OFF` :
+                                   c.type === 'fixed' ? `₹${c.value} OFF` : 'FREE SHIPPING';
+                      return (
+                        <div key={c.id} className="flex items-center justify-between p-2 rounded-xl bg-neutral-50 border border-neutral-200/60 hover:bg-neutral-100/50 transition-all">
+                          <div className="min-w-0 flex-1 pr-2">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-mono font-bold text-xs text-primary bg-neutral-200/70 px-1.5 py-0.5 rounded uppercase tracking-wider">{c.code}</span>
+                              <span className="text-xs font-semibold text-accent-700">{desc}</span>
+                            </div>
+                            <p className="text-[10px] text-neutral-500 mt-1">
+                              Min. order: <span className="font-medium text-neutral-700">₹{c.minOrder}</span>
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => handleApplyCoupon(c.code)}
+                            className="btn-outline btn-xs px-2.5 py-1 text-[11px] font-semibold whitespace-nowrap"
+                          >
+                            Apply
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="space-y-2 text-sm pb-4 border-b border-neutral-100">
               <div className="flex justify-between">
                 <span className="text-neutral-500">Subtotal</span>
@@ -353,8 +424,10 @@ const CheckoutPage = () => {
               <span className="font-bold text-primary">Total</span>
               <span className="font-display font-bold text-2xl text-primary">₹{total.toLocaleString()}</span>
             </div>
-            {appliedCoupon && (
-              <p className="text-xs text-success text-center mt-2">🎉 Coupon "{appliedCoupon.code}" applied</p>
+            {discount > 0 && (
+              <p className="text-xs text-success text-center mt-3">
+                🎉 You're saving ₹{discount.toLocaleString()} on this order!
+              </p>
             )}
           </div>
         </div>

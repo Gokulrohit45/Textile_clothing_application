@@ -98,6 +98,13 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    if (user) {
+      fetch(`${API_URL}/auth/logout-log`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: user.id, name: user.name, email: user.email }),
+      }).catch(err => console.error('Logout logging error:', err));
+    }
     setUser(null);
   };
 

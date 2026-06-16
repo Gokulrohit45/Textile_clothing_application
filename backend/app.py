@@ -85,6 +85,21 @@ def get_next_id(prefix, items):
                 pass
     return f"{prefix}{max_num + 1}"
 
+def log_activity(user_id, user_name, user_email, action):
+    try:
+        logs = sheets_db.get_all('activity_logs')
+        new_log = {
+            "id": get_next_id("log_", logs),
+            "userId": user_id,
+            "userName": user_name,
+            "userEmail": user_email,
+            "action": action,
+            "timestamp": datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        sheets_db.save('activity_logs', new_log)
+    except Exception as e:
+        print(f"Error writing activity log: {e}")
+
 # Temporary in-memory storage for OTPs: { email: { 'otp': '123456', 'expires_at': datetime } }
 otp_storage = {}
 
@@ -136,6 +151,7 @@ def register():
     }
     
     sheets_db.save('customers', new_user)
+    log_activity(new_user['id'], new_user['name'], new_user['email'], "Login (Register)")
     return jsonify(new_user), 201
 
 @app.route('/api/auth/login', methods=['POST'])
@@ -153,6 +169,7 @@ def login():
     if user['status'] == 'blocked':
         return jsonify({"error": "Your account has been suspended"}), 403
         
+    log_activity(user['id'], user['name'], user['email'], "Login")
     return jsonify(user), 200
 
 @app.route('/api/auth/profile/update', methods=['POST'])
@@ -201,6 +218,24 @@ def update_profile():
         updated_user = next((c for c in customers if c['id'] == user_id), None)
         return jsonify(updated_user), 200
     return jsonify({"error": "Failed to update profile"}), 500
+
+@app.route('/api/auth/logout-log', methods=['POST'])
+def logout_log():
+    data = request.json
+    user_id = data.get('id')
+    user_name = data.get('name')
+    user_email = data.get('email')
+    
+    if user_id:
+        log_activity(user_id, user_name, user_email, "Logout")
+        return jsonify({"message": "Logout activity logged"}), 200
+    return jsonify({"error": "Missing user details"}), 400
+
+@app.route('/api/admin/activity-logs', methods=['GET'])
+def get_activity_logs():
+    logs = sheets_db.get_all('activity_logs')
+    logs.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
+    return jsonify(logs), 200
 
 @app.route('/api/auth/profile/change-password', methods=['POST'])
 def change_password():
@@ -981,6 +1016,7 @@ def add_coupon():
         "minOrder": data.get('minOrder', 0),
         "maxUses": data.get('maxUses', 999),
         "usedCount": 0,
+        "startsAt": data.get('startsAt', ''),
         "expiresAt": data.get('expiresAt', ''),
         "status": data.get('status', 'active')
     }
@@ -1182,6 +1218,32 @@ def update_order_status():
     if status == 'delivered':
         update_data["paymentStatus"] = "verified"
         
+    if status == 'return_approved':
+        try:
+            # Fetch current order to see if it is already approved to avoid double incrementing
+            orders = sheets_db.get_all('orders')
+            order = next((o for o in orders if str(o['id']) == str(order_id)), None)
+            if order and order.get('status') != 'return_approved':
+                inventory = sheets_db.get_all('inventory')
+                items = order.get('items', [])
+                if isinstance(items, str):
+                    try:
+                        items = json.loads(items)
+                    except Exception:
+                        items = []
+                for item in items:
+                    p_id = item.get('productId')
+                    color = item.get('color')
+                    size = item.get('size')
+                    qty = int(item.get('qty', 0))
+                    
+                    inv_item = next((i for i in inventory if i['productId'] == p_id and i['colorName'] == color and i['size'] == size), None)
+                    if inv_item:
+                        new_stock = inv_item['stock'] + qty
+                        sheets_db.update('inventory', inv_item['id'], {"stock": new_stock})
+        except Exception as e:
+            print(f"Error restoring inventory stock on return approval: {e}")
+            
     success = sheets_db.update('orders', order_id, update_data)
     if success:
         if status == 'delivered':

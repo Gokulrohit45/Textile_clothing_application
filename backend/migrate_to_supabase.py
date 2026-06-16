@@ -59,8 +59,9 @@ SCHEMAS = {
     'subcategories': ['id', 'categoryId', 'name', 'slug'],
     'inventory': ['id', 'productId', 'colorName', 'size', 'stock'],
     'banners': ['id', 'title', 'subtitle', 'cta', 'ctaLink', 'image', 'bgColor', 'textColor', 'status', 'order'],
-    'coupons': ['id', 'code', 'type', 'value', 'minOrder', 'maxUses', 'usedCount', 'expiresAt', 'status'],
+    'coupons': ['id', 'code', 'type', 'value', 'minOrder', 'maxUses', 'usedCount', 'startsAt', 'expiresAt', 'status'],
     'reviews': ['id', 'productId', 'userId', 'userName', 'rating', 'comment', 'createdAt', 'status'],
+    'activity_logs': ['id', 'userId', 'userName', 'userEmail', 'action', 'timestamp'],
     'orders': ['id', 'userId', 'userName', 'addressId', 'items', 'subtotal', 'discount', 'shipping', 'total', 'paymentMethod', 'paymentStatus', 'paymentScreenshot', 'status', 'trackingId', 'couponCode', 'createdAt', 'updatedAt', 'returnReason', 'customerReturnReason'],
     'payments': ['id', 'orderId', 'method', 'amount', 'screenshot', 'status', 'verifiedAt'],
     'settings': ['key', 'value']

@@ -20,7 +20,7 @@ const AdminOrders = () => {
   const [selectedMonth, setSelectedMonth] = useState('all');
 
   // Rejection details state
-  const [rejectionMode, setRejectionMode] = useState(false);
+  const [rejectionPopupOrder, setRejectionPopupOrder] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
 
   const handleApproveReturn = async (orderId) => {
@@ -30,14 +30,16 @@ const AdminOrders = () => {
     }
   };
 
-  const handleRejectReturn = async (orderId) => {
-    if (!rejectionReason.trim()) return;
-    const success = await updateOrderStatus(orderId, 'return_rejected', null, { returnReason: rejectionReason.trim() });
+  const handleConfirmRejectionPopup = async () => {
+    if (!rejectionPopupOrder || !rejectionReason.trim()) return;
+    const success = await updateOrderStatus(rejectionPopupOrder.id, 'return_rejected', null, { returnReason: rejectionReason.trim() });
     if (success) {
-      setSelectedOrder(prev => prev ? { ...prev, status: 'return_rejected', returnReason: rejectionReason.trim() } : null);
-      setRejectionMode(false);
-      setRejectionReason('');
+      if (selectedOrder && selectedOrder.id === rejectionPopupOrder.id) {
+        setSelectedOrder(prev => ({ ...prev, status: 'return_rejected', returnReason: rejectionReason.trim() }));
+      }
     }
+    setRejectionPopupOrder(null);
+    setRejectionReason('');
   };
 
   const filtered = orders.filter(o => {
@@ -65,9 +67,8 @@ const AdminOrders = () => {
 
   const handleStatusUpdate = (orderId, status) => {
     if (status === 'return_rejected') {
-      const reason = prompt('Please enter the reason for rejecting the return:');
-      if (reason === null) return;
-      updateOrderStatus(orderId, status, undefined, { returnReason: reason.trim() });
+      const order = orders.find(o => o.id === orderId);
+      setRejectionPopupOrder(order);
     } else {
       updateOrderStatus(orderId, status, status === 'shipped' ? trackingInput || undefined : undefined);
     }
@@ -430,13 +431,11 @@ const AdminOrders = () => {
               </div>
 
               {/* Return request details */}
-              {(selectedOrder.status === 'return_pending' || selectedOrder.customerReturnReason) && (
+              {(selectedOrder.status === 'return_pending' || selectedOrder.customerReturnReason || selectedOrder.status === 'return_approved' || selectedOrder.status === 'return_rejected') && (
                 <div className="bg-neutral-50 rounded-xl p-4 border border-neutral-100 space-y-3">
                   <p className="text-xs font-semibold text-neutral-500 uppercase">Return Status Details</p>
                   
-                  {selectedOrder.customerReturnReason && (
-                    <p className="text-sm text-primary"><strong>Customer Reason:</strong> {selectedOrder.customerReturnReason}</p>
-                  )}
+                  <p className="text-sm text-primary"><strong>Customer Reason:</strong> {selectedOrder.customerReturnReason || 'Not specified'}</p>
 
                   {selectedOrder.status === 'return_pending' && (
                     <div className="space-y-3 pt-2 border-t border-neutral-100">
@@ -448,39 +447,12 @@ const AdminOrders = () => {
                           Approve Return
                         </button>
                         <button 
-                          onClick={() => setRejectionMode(true)}
+                          onClick={() => setRejectionPopupOrder(selectedOrder)}
                           className="bg-danger text-white py-1.5 px-3 rounded-lg text-xs font-semibold hover:bg-danger-dark transition-colors"
                         >
                           Reject Return
                         </button>
                       </div>
-
-                      {rejectionMode && (
-                        <div className="space-y-2 pt-2 border-t border-dashed border-neutral-200 animate-fade-in">
-                          <textarea
-                            className="input text-xs"
-                            placeholder="Type reason for rejection..."
-                            value={rejectionReason}
-                            onChange={e => setRejectionReason(e.target.value)}
-                            rows={2}
-                          />
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleRejectReturn(selectedOrder.id)}
-                              className="btn-primary py-1 px-3 text-xs"
-                              disabled={!rejectionReason.trim()}
-                            >
-                              Submit Rejection
-                            </button>
-                            <button
-                              onClick={() => { setRejectionMode(false); setRejectionReason(''); }}
-                              className="btn-ghost py-1 px-3 text-xs"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   )}
 
@@ -507,10 +479,7 @@ const AdminOrders = () => {
                       key={status}
                       onClick={() => { 
                         if (status === 'return_rejected') {
-                          const reason = prompt('Please enter the reason for rejecting the return:');
-                          if (reason === null) return;
-                          updateOrderStatus(selectedOrder.id, status, null, { returnReason: reason.trim() });
-                          setSelectedOrder({ ...selectedOrder, status, returnReason: reason.trim() });
+                          setRejectionPopupOrder(selectedOrder);
                         } else {
                           handleStatusUpdate(selectedOrder.id, status); 
                           setSelectedOrder({ ...selectedOrder, status });
@@ -531,6 +500,40 @@ const AdminOrders = () => {
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Rejection Reason Modal */}
+      {rejectionPopupOrder && (
+        <div className="overlay fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 animate-scale-in" onClick={e => e.stopPropagation()}>
+            <h3 className="font-display font-bold text-lg text-primary mb-3">Reject Return Request</h3>
+            <p className="text-xs text-neutral-400 mb-4">Please enter the reason for rejecting the return for Order #{rejectionPopupOrder.id.toUpperCase()}:</p>
+            
+            <textarea
+              className="input mb-4"
+              placeholder="Reason for rejection (e.g. Item shows signs of wear, tags removed, etc.)"
+              value={rejectionReason}
+              onChange={e => setRejectionReason(e.target.value)}
+              rows={3}
+              required
+            />
+            
+            <div className="flex gap-2 justify-end pt-2 border-t border-neutral-100">
+              <button
+                onClick={() => { setRejectionPopupOrder(null); setRejectionReason(''); }}
+                className="btn-ghost btn-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmRejectionPopup}
+                className="btn-primary btn-sm bg-danger border-danger hover:bg-danger/90 text-white"
+                disabled={!rejectionReason.trim()}
+              >
+                Reject Return
+              </button>
             </div>
           </div>
         </div>
