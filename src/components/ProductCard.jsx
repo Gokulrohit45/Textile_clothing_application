@@ -111,19 +111,23 @@ const ProductCard = ({ product }) => {
         </h3>
 
         {/* Rating */}
-        {product.rating > 0 && (
-          <div className="flex items-center gap-1.5 mb-2">
-            <div className="flex">
-              {[1, 2, 3, 4, 5].map(s => (
-                <Star
-                  key={s}
-                  className={`w-3 h-3 ${s <= Math.round(product.rating) ? 'star-filled fill-current' : 'star-empty'}`}
-                />
-              ))}
-            </div>
-            <span className="text-xs text-neutral-400">({product.reviewCount})</span>
-          </div>
-        )}
+        <div className="flex items-center gap-1.5 mb-2 min-h-[16px]">
+          {product.reviewCount > 0 ? (
+            <>
+              <div className="flex">
+                {[1, 2, 3, 4, 5].map(s => (
+                  <Star
+                    key={s}
+                    className={`w-3 h-3 ${s <= Math.round(product.rating) ? 'star-filled fill-current' : 'star-empty'}`}
+                  />
+                ))}
+              </div>
+              <span className="text-xs text-neutral-400">({product.reviewCount})</span>
+            </>
+          ) : (
+            <span className="text-xs text-neutral-400">No reviews yet</span>
+          )}
+        </div>
 
         {/* Price */}
         <div className="flex items-baseline gap-2">

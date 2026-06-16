@@ -62,7 +62,7 @@ mockProducts = [
       "https://images.unsplash.com/photo-1594938298603-c8148c4f1caa?w=600&auto=format&fit=crop"
     ],
     "videoUrl": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    "rating": 4.5, "reviewCount": 128, "isFeatured": True, "isNew": False, "status": "active",
+    "rating": 4.5, "reviewCount": 2, "isFeatured": True, "isNew": False, "status": "active",
     "tags": ["formal", "office", "classic"]
   },
   {
@@ -77,7 +77,7 @@ mockProducts = [
       "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=600&auto=format&fit=crop"
     ],
     "videoUrl": "",
-    "rating": 4.2, "reviewCount": 87, "isFeatured": True, "isNew": True, "status": "active",
+    "rating": 0.0, "reviewCount": 0, "isFeatured": True, "isNew": True, "status": "active",
     "tags": ["casual", "graphic", "everyday"]
   },
   {
@@ -92,7 +92,7 @@ mockProducts = [
       "https://images.unsplash.com/photo-1598554747436-c9293d6a588f?w=600&auto=format&fit=crop"
     ],
     "videoUrl": "",
-    "rating": 4.7, "reviewCount": 203, "isFeatured": False, "isNew": False, "status": "active",
+    "rating": 0.0, "reviewCount": 0, "isFeatured": False, "isNew": False, "status": "active",
     "tags": ["denim", "slim", "everyday"]
   },
   {
@@ -107,7 +107,7 @@ mockProducts = [
       "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=600&auto=format&fit=crop"
     ],
     "videoUrl": "",
-    "rating": 4.6, "reviewCount": 156, "isFeatured": True, "isNew": False, "status": "active",
+    "rating": 0.0, "reviewCount": 0, "isFeatured": True, "isNew": False, "status": "active",
     "tags": ["hoodie", "casual", "winter"]
   },
   {
@@ -122,7 +122,7 @@ mockProducts = [
       "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=600&auto=format&fit=crop"
     ],
     "videoUrl": "",
-    "rating": 4.3, "reviewCount": 74, "isFeatured": False, "isNew": True, "status": "active",
+    "rating": 0.0, "reviewCount": 0, "isFeatured": False, "isNew": True, "status": "active",
     "tags": ["linen", "chino", "smart-casual"]
   },
   {
@@ -137,7 +137,7 @@ mockProducts = [
       "https://images.unsplash.com/photo-1580651315530-69c8e0026377?w=600&auto=format&fit=crop"
     ],
     "videoUrl": "",
-    "rating": 4.8, "reviewCount": 312, "isFeatured": True, "isNew": False, "status": "active",
+    "rating": 5.0, "reviewCount": 1, "isFeatured": True, "isNew": False, "status": "active",
     "tags": ["floral", "midi", "summer"]
   },
   {
@@ -152,7 +152,7 @@ mockProducts = [
       "https://images.unsplash.com/photo-1564257631407-4deb1f99d992?w=600&auto=format&fit=crop"
     ],
     "videoUrl": "",
-    "rating": 4.4, "reviewCount": 95, "isFeatured": False, "isNew": True, "status": "active",
+    "rating": 0.0, "reviewCount": 0, "isFeatured": False, "isNew": True, "status": "active",
     "tags": ["tops", "linen", "casual"]
   },
   {
@@ -167,7 +167,7 @@ mockProducts = [
       "https://images.unsplash.com/photo-1552902865-b72c031ac5ea?w=600&auto=format&fit=crop"
     ],
     "videoUrl": "",
-    "rating": 4.3, "reviewCount": 68, "isFeatured": False, "isNew": False, "status": "active",
+    "rating": 0.0, "reviewCount": 0, "isFeatured": False, "isNew": False, "status": "active",
     "tags": ["skirt", "mini", "trendy"]
   },
   {
@@ -182,7 +182,7 @@ mockProducts = [
       "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=600&auto=format&fit=crop"
     ],
     "videoUrl": "",
-    "rating": 4.6, "reviewCount": 141, "isFeatured": True, "isNew": False, "status": "active",
+    "rating": 0.0, "reviewCount": 0, "isFeatured": True, "isNew": False, "status": "active",
     "tags": ["knit", "sweater", "winter"]
   },
   {
@@ -197,7 +197,7 @@ mockProducts = [
       "https://images.unsplash.com/photo-1509551388413-e18d0ac5d495?w=600&auto=format&fit=crop"
     ],
     "videoUrl": "",
-    "rating": 4.5, "reviewCount": 187, "isFeatured": True, "isNew": False, "status": "active",
+    "rating": 0.0, "reviewCount": 0, "isFeatured": True, "isNew": False, "status": "active",
     "tags": ["jeans", "skinny", "high-rise"]
   },
   {
@@ -212,7 +212,7 @@ mockProducts = [
       "https://images.unsplash.com/photo-1558171813-36bf28b71d0f?w=600&auto=format&fit=crop"
     ],
     "videoUrl": "",
-    "rating": 4.7, "reviewCount": 89, "isFeatured": True, "isNew": False, "status": "active",
+    "rating": 5.0, "reviewCount": 1, "isFeatured": True, "isNew": False, "status": "active",
     "tags": ["kids", "casual", "fun"]
   },
   {
@@ -226,7 +226,7 @@ mockProducts = [
       "https://images.unsplash.com/photo-1503919545889-aef636e10ad4?w=600&auto=format&fit=crop"
     ],
     "videoUrl": "",
-    "rating": 4.4, "reviewCount": 53, "isFeatured": False, "isNew": True, "status": "active",
+    "rating": 0.0, "reviewCount": 0, "isFeatured": False, "isNew": True, "status": "active",
     "tags": ["kids", "shorts", "casual"]
   },
   {
@@ -241,7 +241,7 @@ mockProducts = [
       "https://images.unsplash.com/photo-1471286174890-9c112ac6823b?w=600&auto=format&fit=crop"
     ],
     "videoUrl": "",
-    "rating": 4.8, "reviewCount": 107, "isFeatured": True, "isNew": False, "status": "active",
+    "rating": 0.0, "reviewCount": 0, "isFeatured": True, "isNew": False, "status": "active",
     "tags": ["kids", "set", "stripes"]
   },
   {
@@ -255,7 +255,7 @@ mockProducts = [
       "https://images.unsplash.com/photo-1533827432537-70133748f5c8?w=600&auto=format&fit=crop"
     ],
     "videoUrl": "",
-    "rating": 4.9, "reviewCount": 76, "isFeatured": False, "isNew": True, "status": "active",
+    "rating": 0.0, "reviewCount": 0, "isFeatured": False, "isNew": True, "status": "active",
     "tags": ["kids", "girls", "dress", "party"]
   }
 ]

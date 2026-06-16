@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo } from 'react';
 
 const ProductContext = createContext();
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -16,6 +16,21 @@ export const ProductProvider = ({ children }) => {
     return s ? JSON.parse(s) : [];
   });
   const [loading, setLoading] = useState(true);
+
+  const computedProducts = useMemo(() => {
+    return products.map(product => {
+      const prodReviews = reviews.filter(r => r.productId === product.id && r.status === 'approved');
+      const reviewCount = prodReviews.length;
+      const rating = reviewCount > 0 
+        ? Number((prodReviews.reduce((sum, r) => sum + Number(r.rating || 0), 0) / reviewCount).toFixed(1))
+        : 0;
+      return {
+        ...product,
+        rating,
+        reviewCount
+      };
+    });
+  }, [products, reviews]);
 
   // Sync wishlist to localStorage
   useEffect(() => {
@@ -409,24 +424,24 @@ export const ProductProvider = ({ children }) => {
   const isWishlisted = (productId, userId) => wishlist.some(w => w.key === `${userId}-${productId}`);
   const getUserWishlist = (userId) => {
     const ids = wishlist.filter(w => w.userId === userId).map(w => w.productId);
-    return products.filter(p => ids.includes(p.id));
+    return computedProducts.filter(p => ids.includes(p.id));
   };
 
   // Query helpers
-  const getProductById = (id) => products.find(p => p.id === id);
+  const getProductById = (id) => computedProducts.find(p => p.id === id);
   const getCategoryById = (id) => categories.find(c => c.id === id);
   const getSubcategoryById = (id) => subcategories.find(s => s.id === id);
   const getCategoryBySlug = (slug) => categories.find(c => c.slug === slug);
   const getSubcategoriesByCategory = (catId) => subcategories.filter(s => s.categoryId === catId);
-  const getProductsByCategory = (catId) => products.filter(p => p.categoryId === catId && p.status === 'active');
-  const getProductsBySubcategory = (subId) => products.filter(p => p.subcategoryId === subId && p.status === 'active');
-  const getFeaturedProducts = () => products.filter(p => p.isFeatured && p.status === 'active');
-  const getNewArrivals = () => products.filter(p => p.isNew && p.status === 'active');
+  const getProductsByCategory = (catId) => computedProducts.filter(p => p.categoryId === catId && p.status === 'active');
+  const getProductsBySubcategory = (subId) => computedProducts.filter(p => p.subcategoryId === subId && p.status === 'active');
+  const getFeaturedProducts = () => computedProducts.filter(p => p.isFeatured && p.status === 'active');
+  const getNewArrivals = () => computedProducts.filter(p => p.isNew && p.status === 'active');
   const getActiveBanners = () => banners.filter(b => b.status === 'active').sort((a, b) => a.order - b.order);
 
   const searchProducts = (query) => {
     const q = query.toLowerCase();
-    return products.filter(p =>
+    return computedProducts.filter(p =>
       p.status === 'active' && (
         p.name.toLowerCase().includes(q) ||
         p.description.toLowerCase().includes(q) ||
@@ -437,7 +452,7 @@ export const ProductProvider = ({ children }) => {
 
   return (
     <ProductContext.Provider value={{
-      products, categories, subcategories, banners, inventory, reviews, coupons, wishlist, loading,
+      products: computedProducts, categories, subcategories, banners, inventory, reviews, coupons, wishlist, loading,
       refreshProducts: fetchData,
       addProduct, updateProduct, deleteProduct,
       addCategory, updateCategory, deleteCategory,

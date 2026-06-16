@@ -273,8 +273,14 @@ const ProductDetailPage = () => {
 
             {/* Rating */}
             <div className="flex items-center gap-2 mb-4">
-              <StarRating rating={product.rating} size="sm" />
-              <span className="text-sm text-neutral-500">({product.reviewCount} reviews)</span>
+              {product.reviewCount > 0 ? (
+                <>
+                  <StarRating rating={product.rating} size="sm" />
+                  <span className="text-sm text-neutral-500">({product.reviewCount} {product.reviewCount === 1 ? 'review' : 'reviews'})</span>
+                </>
+              ) : (
+                <span className="text-sm text-neutral-400">No reviews yet</span>
+              )}
               {product.isNew && <span className="badge-accent">NEW</span>}
             </div>
 

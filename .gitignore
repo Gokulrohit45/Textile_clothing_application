@@ -43,3 +43,10 @@ __pycache__/
 backend/static/uploads/*
 !backend/static/uploads/.gitkeep
 
+# Virtual environments
+venv/
+.venv/
+backend/venv/
+backend/.venv/
+
+

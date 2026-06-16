@@ -186,20 +186,29 @@ const CategoryPage = () => {
                 {/* Colors */}
                 <div>
                   <h4 className="font-semibold text-sm text-primary mb-3">Color</h4>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="space-y-2">
                     {allColors.map((color, i) => {
                       const product = categoryProducts.find(p => p.colorNames?.includes(color));
                       const hex = product?.colors?.[product.colorNames.indexOf(color)];
+                      const isSelected = filters.colors.includes(color);
                       return (
                         <button
                           key={color}
                           onClick={() => toggleFilter('colors', color)}
-                          title={color}
-                          className={`w-7 h-7 rounded-full border-2 transition-all ${
-                            filters.colors.includes(color) ? 'border-primary scale-110' : 'border-neutral-200'
+                          className={`flex items-center gap-3 w-full text-left text-sm py-1.5 px-2.5 rounded-xl transition-all ${
+                            isSelected
+                              ? 'bg-secondary-200 text-primary font-medium border border-primary/20 shadow-sm'
+                              : 'text-neutral-600 hover:bg-neutral-50 hover:text-primary border border-transparent'
                           }`}
-                          style={{ backgroundColor: hex || '#ccc' }}
-                        />
+                        >
+                          <span
+                            className={`w-5 h-5 rounded-full border-2 transition-all flex-shrink-0 ${
+                              isSelected ? 'border-primary scale-105 ring-2 ring-primary/10' : 'border-neutral-200'
+                            }`}
+                            style={{ backgroundColor: hex || '#ccc' }}
+                          />
+                          <span className="capitalize text-xs font-medium">{color}</span>
+                        </button>
                       );
                     })}
                   </div>
