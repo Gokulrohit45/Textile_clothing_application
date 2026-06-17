@@ -10,6 +10,17 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
 import sheets_db
+import google.generativeai as genai
+
+load_dotenv()
+
+# Configure Gemini API
+gemini_api_key = os.getenv("GEMINI_API_KEY")
+if gemini_api_key:
+    genai.configure(api_key=gemini_api_key)
+    print("Gemini API configured successfully.")
+else:
+    print("WARNING: GEMINI_API_KEY is not configured in .env.")
 
 def save_base64_file(base64_str):
     if not isinstance(base64_str, str):
@@ -832,6 +843,64 @@ def remove_product(id):
         sheets_db.delete_by_column('inventory', 'productId', id)
         return jsonify({"message": "Product deleted"}), 200
     return jsonify({"error": "Product not found"}), 404
+
+@app.route('/api/admin/generate-product-details', methods=['POST'])
+def generate_product_details():
+    if not os.getenv("GEMINI_API_KEY"):
+        return jsonify({"error": "GEMINI_API_KEY is not configured in .env file."}), 400
+
+    data = request.json
+    image_base64 = data.get('image')
+    
+    if not image_base64:
+        return jsonify({"error": "No product image provided."}), 400
+
+    try:
+        if "," in image_base64:
+            header, encoded = image_base64.split(",", 1)
+            mime_type = header.split(";")[0].split(":")[1]
+        else:
+            encoded = image_base64
+            mime_type = "image/jpeg"
+            
+        image_data = base64.b64decode(encoded)
+        
+        model = genai.GenerativeModel('gemini-2.5-flash')
+        
+        prompt = """
+        Analyze this clothing/apparel product image. Generate creative and structured details for this product.
+        You MUST respond ONLY with a valid JSON object matching the following structure. Do not output markdown wrappers like ```json or any other text.
+        {
+          "name": "Creative name for the product",
+          "description": "Engaging description describing style, design, fit, and key details.",
+          "material": "Estimated fabric/material (e.g., 100% Cotton, Linen, Denim)",
+          "tags": ["3-5 simple lowercase keyword tags like shirts, casual, summer, girls, formal"],
+          "suggestedCategory": "Match to one of: Men / Women / Kids",
+          "suggestedSubcategory": "Match to one of: Shirts, T-Shirts, Jeans, Hoodies, Trousers, Dresses, Tops, Skirts, Knitwear, Tees, Shorts, Sets"
+        }
+        """
+        
+        response = model.generate_content([
+            {
+                "mime_type": mime_type,
+                "data": image_data
+            },
+            prompt
+        ])
+        
+        text_response = response.text.strip()
+        if text_response.startswith("```json"):
+            text_response = text_response[7:]
+        if text_response.endswith("```"):
+            text_response = text_response[:-3]
+        text_response = text_response.strip()
+        
+        product_details = json.loads(text_response)
+        return jsonify(product_details), 200
+
+    except Exception as e:
+        print(f"Error in generate_product_details: {e}")
+        return jsonify({"error": f"Failed to generate details: {str(e)}"}), 500
 
 # ==========================================
 # CATEGORIES & SUBCATEGORIES

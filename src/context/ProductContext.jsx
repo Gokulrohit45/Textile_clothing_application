@@ -440,14 +440,102 @@ export const ProductProvider = ({ children }) => {
   const getActiveBanners = () => banners.filter(b => b.status === 'active').sort((a, b) => a.order - b.order);
 
   const searchProducts = (query) => {
-    const q = query.toLowerCase();
-    return computedProducts.filter(p =>
-      p.status === 'active' && (
-        p.name.toLowerCase().includes(q) ||
-        p.description.toLowerCase().includes(q) ||
-        (p.tags && p.tags.some(t => t.toLowerCase().includes(q)))
-      )
-    );
+    if (!query) return [];
+
+    // Split query by "and", "or", or commas to support multiple search terms
+    const subQueries = query
+      .toLowerCase()
+      .split(/\s+and\s+|\s+or\s+|,\s*/)
+      .map(q => q.trim())
+      .filter(Boolean);
+
+    const allResults = new Map();
+
+    const normalizeWord = (word) => {
+      let w = word.toLowerCase().trim();
+      if (w === 'mens') return 'men';
+      if (w === 'womens') return 'women';
+      if (w === 'kids') return 'kids';
+      if (w === 'tshirt' || w === 'tshirts' || w === 't-shirt' || w === 't-shirts') return 'tshirt';
+      if (w === 'tees' || w === 'tee') return 'tshirt';
+      if (w.endsWith('s') && !['kids', 'dress', 'jeans', 'trousers'].includes(w)) {
+        return w.slice(0, -1);
+      }
+      return w;
+    };
+
+    subQueries.forEach(subQuery => {
+      const queryTokens = subQuery
+        .split(/[\s.-]+/)
+        .map(normalizeWord)
+        .filter(Boolean);
+
+      if (queryTokens.length === 0) return;
+
+      // 1. Try strict matching (AND: all query tokens must match)
+      const strictMatches = computedProducts.filter(p => {
+        if (p.status !== 'active') return false;
+
+        const cat = categories.find(c => c.id === p.categoryId);
+        const sub = subcategories.find(s => s.id === p.subcategoryId);
+
+        const searchText = [
+          p.name || '',
+          p.description || '',
+          p.material || '',
+          cat ? cat.name : '',
+          sub ? sub.name : '',
+          ...(p.tags || []),
+          ...(p.colorNames || []),
+          ...(p.sizes || [])
+        ].join(' ').toLowerCase();
+
+        const productTokens = searchText.split(/[\s,.-]+/).map(normalizeWord);
+
+        // All query tokens must be present in product tokens
+        return queryTokens.every(token => productTokens.includes(token));
+      });
+
+      if (strictMatches.length > 0) {
+        strictMatches.forEach(p => allResults.set(p.id, p));
+        return;
+      }
+
+      // 2. Fallback to fuzzy/OR matching sorted by relevance score
+      const scoredMatches = computedProducts
+        .filter(p => p.status === 'active')
+        .map(p => {
+          const cat = categories.find(c => c.id === p.categoryId);
+          const sub = subcategories.find(s => s.id === p.subcategoryId);
+
+          const searchText = [
+            p.name || '',
+            p.description || '',
+            p.material || '',
+            cat ? cat.name : '',
+            sub ? sub.name : '',
+            ...(p.tags || []),
+            ...(p.colorNames || []),
+            ...(p.sizes || [])
+          ].join(' ').toLowerCase();
+
+          const productTokens = searchText.split(/[\s,.-]+/).map(normalizeWord);
+
+          // Calculate how many query tokens match
+          const matchedCount = queryTokens.filter(token => productTokens.includes(token)).length;
+          return { product: p, matchedCount };
+        })
+        .filter(item => item.matchedCount > 0)
+        .sort((a, b) => b.matchedCount - a.matchedCount);
+
+      scoredMatches.forEach(item => {
+        if (!allResults.has(item.product.id)) {
+          allResults.set(item.product.id, item.product);
+        }
+      });
+    });
+
+    return Array.from(allResults.values());
   };
 
   return (

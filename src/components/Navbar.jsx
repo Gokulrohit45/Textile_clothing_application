@@ -2,9 +2,11 @@ import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   ShoppingBag, Heart, Search, User, Menu, X, ChevronDown,
-  LogOut, Settings, Package, LayoutDashboard, ShieldCheck
+  LogOut, Settings, Package, LayoutDashboard, ShieldCheck,
+  Mic
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import toast from 'react-hot-toast';
 import { useCart } from '../context/CartContext';
 import { useSettings } from '../context/SettingsContext';
 
@@ -18,6 +20,7 @@ const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isListening, setIsListening] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const searchRef = useRef(null);
@@ -50,6 +53,52 @@ const Navbar = () => {
       setSearchOpen(false);
       setSearchQuery('');
     }
+  };
+
+  const startVoiceSearch = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast.error('Voice search is not supported in this browser.', { id: 'voice-search-toast' });
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      toast.success('Listening... speak now!', { id: 'voice-search-toast', duration: 4000 });
+    };
+
+    recognition.onerror = (event) => {
+      console.error('Speech recognition error:', event.error);
+      setIsListening(false);
+      if (event.error === 'not-allowed') {
+        toast.error('Microphone permission denied.', { id: 'voice-search-toast' });
+      } else {
+        toast.error(`Speech recognition failed: ${event.error}`, { id: 'voice-search-toast' });
+      }
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognition.onresult = (event) => {
+      const speechToText = event.results[0][0].transcript;
+      setSearchQuery(speechToText);
+      
+      if (speechToText.trim()) {
+        navigate(`/search?q=${encodeURIComponent(speechToText.trim())}`);
+        setSearchOpen(false);
+        setSearchQuery('');
+        toast.success(`Searching for "${speechToText}"`, { id: 'voice-search-toast' });
+      }
+    };
+
+    recognition.start();
   };
 
   const navLinks = [
@@ -118,14 +167,28 @@ const Navbar = () => {
                 <div className="absolute right-0 top-12 w-72 bg-white rounded-2xl shadow-card-hover border border-neutral-100 p-3 animate-scale-in">
                   <form onSubmit={handleSearch}>
                     <div className="flex gap-2">
-                      <input
-                        id="navbar-search-input"
-                        autoFocus
-                        className="input py-2.5 text-sm"
-                        placeholder="Search clothes..."
-                        value={searchQuery}
-                        onChange={e => setSearchQuery(e.target.value)}
-                      />
+                      <div className="relative flex-1">
+                        <input
+                          id="navbar-search-input"
+                          autoFocus
+                          className="input py-2.5 pr-10 text-sm w-full"
+                          placeholder="Search clothes..."
+                          value={searchQuery}
+                          onChange={e => setSearchQuery(e.target.value)}
+                        />
+                        <button
+                          type="button"
+                          onClick={startVoiceSearch}
+                          className={`absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-full transition-all duration-200 ${
+                            isListening
+                              ? 'text-red-500 bg-red-50 animate-pulse'
+                              : 'text-neutral-400 hover:text-primary hover:bg-neutral-50'
+                          }`}
+                          title="Search by voice"
+                        >
+                          <Mic className="w-4 h-4" />
+                        </button>
+                      </div>
                       <button type="submit" className="btn-primary py-2 px-3 rounded-xl">
                         <Search className="w-4 h-4" />
                       </button>

@@ -235,6 +235,59 @@ const AdminProducts = () => {
     e.target.value = '';
   };
 
+  const handleAIGenerate = async () => {
+    if (!form.images || form.images.length === 0) {
+      toast.error('Please upload at least one image first.');
+      return;
+    }
+
+    const firstImage = form.images[0];
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const loadingToast = toast.loading('AI is analyzing the image & generating details...');
+    
+    try {
+      const res = await fetch(`${API_URL}/admin/generate-product-details`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: firstImage })
+      });
+      
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to generate details');
+      }
+
+      let matchedCategoryId = '';
+      let matchedSubcategoryId = '';
+
+      if (data.suggestedCategory) {
+        const catMatch = categories.find(c => c.name.toLowerCase() === data.suggestedCategory.toLowerCase() || c.id.toLowerCase() === data.suggestedCategory.toLowerCase());
+        if (catMatch) matchedCategoryId = catMatch.id;
+      }
+
+      if (data.suggestedSubcategory && matchedCategoryId) {
+        const catSubs = getSubcategoriesByCategory(matchedCategoryId);
+        const subMatch = catSubs.find(s => s.name.toLowerCase() === data.suggestedSubcategory.toLowerCase() || s.slug.toLowerCase() === data.suggestedSubcategory.toLowerCase());
+        if (subMatch) matchedSubcategoryId = subMatch.id;
+      }
+
+      setForm(prev => ({
+        ...prev,
+        name: data.name || prev.name,
+        description: data.description || prev.description,
+        material: data.material || prev.material,
+        tags: [...new Set([...(prev.tags || []), ...(data.tags || [])])],
+        categoryId: matchedCategoryId || prev.categoryId,
+        subcategoryId: matchedSubcategoryId || prev.subcategoryId
+      }));
+
+      toast.success('Product details generated successfully!', { id: loadingToast });
+    } catch (err) {
+      console.error('AI Generation error:', err);
+      toast.error(err.message || 'AI generation failed', { id: loadingToast });
+    }
+  };
+
   const handleVideoUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -481,10 +534,21 @@ const AdminProducts = () => {
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="label mb-0">Image URLs</label>
-                  <label className="cursor-pointer text-xs font-semibold text-primary hover:text-primary-dark flex items-center gap-1">
-                    <ImagePlus className="w-3.5 h-3.5" /> Upload from local
-                    <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload} />
-                  </label>
+                  <div className="flex items-center gap-3">
+                    {form.images?.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={handleAIGenerate}
+                        className="text-xs font-semibold text-accent-700 hover:text-accent-850 flex items-center gap-1 bg-accent/10 px-2.5 py-1 rounded-lg border border-accent/20 transition-all hover:scale-102"
+                      >
+                        ✨ Auto-Fill with AI
+                      </button>
+                    )}
+                    <label className="cursor-pointer text-xs font-semibold text-primary hover:text-primary-dark flex items-center gap-1">
+                      <ImagePlus className="w-3.5 h-3.5" /> Upload from local
+                      <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload} />
+                    </label>
+                  </div>
                 </div>
                 <div className="flex gap-2 mb-2">
                   <input className="input py-2" placeholder="https://..." value={imageInput} onChange={e => setImageInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && addImage()} />
