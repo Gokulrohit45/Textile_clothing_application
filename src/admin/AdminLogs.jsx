@@ -4,6 +4,55 @@ import toast from 'react-hot-toast';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
+const formatLocalTimestamp = (timestampStr) => {
+  if (!timestampStr) return '';
+  try {
+    let parsedDate;
+    if (timestampStr.includes('T') || timestampStr.endsWith('Z') || timestampStr.includes('+')) {
+      parsedDate = new Date(timestampStr);
+    } else {
+      // Legacy format (e.g. "2026-06-17 11:03:23" or "2026-06-17 10:30:45")
+      // Heuristic: if parsed as UTC it would be in the future, it is a local IST log.
+      // Otherwise, it was recorded in UTC by Render, so treat it as UTC.
+      const utcDate = new Date(timestampStr.replace(' ', 'T') + 'Z');
+      const now = new Date();
+      if (!isNaN(utcDate.getTime()) && utcDate <= now) {
+        parsedDate = utcDate;
+      } else {
+        const parts = timestampStr.split(/[- :]/);
+        if (parts.length >= 6) {
+          parsedDate = new Date(
+            parseInt(parts[0]),
+            parseInt(parts[1]) - 1,
+            parseInt(parts[2]),
+            parseInt(parts[3]),
+            parseInt(parts[4]),
+            parseInt(parts[5])
+          );
+        } else {
+          parsedDate = new Date(timestampStr);
+        }
+      }
+    }
+
+    if (isNaN(parsedDate.getTime())) {
+      return timestampStr;
+    }
+
+    const pad = (num) => String(num).padStart(2, '0');
+    const yyyy = parsedDate.getFullYear();
+    const mm = pad(parsedDate.getMonth() + 1);
+    const dd = pad(parsedDate.getDate());
+    const hh = pad(parsedDate.getHours());
+    const min = pad(parsedDate.getMinutes());
+    const ss = pad(parsedDate.getSeconds());
+
+    return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
+  } catch (e) {
+    return timestampStr;
+  }
+};
+
 const AdminLogs = () => {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -142,7 +191,7 @@ const AdminLogs = () => {
                       <td className="px-5 py-4 whitespace-nowrap">
                         <span className="text-sm text-neutral-600 flex items-center gap-2">
                           <Clock className="w-4 h-4 text-neutral-400" />
-                          {log.timestamp}
+                          {formatLocalTimestamp(log.timestamp)}
                         </span>
                       </td>
                     </tr>

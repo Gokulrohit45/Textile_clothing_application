@@ -105,7 +105,7 @@ def log_activity(user_id, user_name, user_email, action):
             "userName": user_name,
             "userEmail": user_email,
             "action": action,
-            "timestamp": datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            "timestamp": datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
         }
         sheets_db.save('activity_logs', new_log)
     except Exception as e:
@@ -242,10 +242,33 @@ def logout_log():
         return jsonify({"message": "Logout activity logged"}), 200
     return jsonify({"error": "Missing user details"}), 400
 
+def parse_log_timestamp(ts):
+    if not ts:
+        return datetime.datetime.min
+    # Try ISO format 'YYYY-MM-DDTHH:MM:SSZ'
+    try:
+        if 'T' in ts:
+            clean_ts = ts.replace('Z', '')
+            return datetime.datetime.strptime(clean_ts.split('.')[0], '%Y-%m-%dT%H:%M:%S')
+    except Exception:
+        pass
+    # Try legacy format 'YYYY-MM-DD HH:MM:SS'
+    try:
+        dt = datetime.datetime.strptime(ts, '%Y-%m-%d %H:%M:%S')
+        # Heuristic: if the naive datetime is in the future relative to now (UTC),
+        # it was likely a local IST log, so adjust it to UTC by subtracting 5.5 hours.
+        now_utc = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+        if dt > now_utc:
+            dt = dt - datetime.timedelta(hours=5, minutes=30)
+        return dt
+    except Exception:
+        pass
+    return datetime.datetime.min
+
 @app.route('/api/admin/activity-logs', methods=['GET'])
 def get_activity_logs():
     logs = sheets_db.get_all('activity_logs')
-    logs.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
+    logs.sort(key=lambda x: parse_log_timestamp(x.get('timestamp', '')), reverse=True)
     return jsonify(logs), 200
 
 @app.route('/api/auth/profile/change-password', methods=['POST'])
