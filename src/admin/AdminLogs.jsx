@@ -58,6 +58,7 @@ const AdminLogs = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
+  const [selectedDate, setSelectedDate] = useState('');
 
   const fetchLogs = async () => {
     try {
@@ -89,12 +90,20 @@ const AdminLogs = () => {
       
       const matchesSearch = 
         userNameStr.toLowerCase().includes(search.toLowerCase()) ||
-        userEmailStr.toLowerCase().includes(search.toLowerCase());
+        userEmailStr.toLowerCase().includes(search.toLowerCase()) ||
+        actionStr.toLowerCase().includes(search.toLowerCase());
       
-      if (filter === 'all') return matchesSearch;
-      if (filter === 'login') return matchesSearch && actionStr.toLowerCase().includes('login');
-      if (filter === 'logout') return matchesSearch && actionStr.toLowerCase().includes('logout');
-      return matchesSearch;
+      let matchesFilter = true;
+      if (filter === 'login') matchesFilter = actionStr.toLowerCase().includes('login');
+      else if (filter === 'logout') matchesFilter = actionStr.toLowerCase().includes('logout');
+      
+      let matchesDate = true;
+      if (selectedDate) {
+        const formattedLogDate = formatLocalTimestamp(log.timestamp); // "YYYY-MM-DD HH:MM:SS"
+        matchesDate = formattedLogDate.startsWith(selectedDate);
+      }
+      
+      return matchesSearch && matchesFilter && matchesDate;
     });
 
   return (
@@ -117,16 +126,35 @@ const AdminLogs = () => {
         </button>
       </div>
 
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-48">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
           <input 
             className="input pl-10" 
-            placeholder="Search by name or email..." 
+            placeholder="Search by name, email, or action..." 
             value={search} 
             onChange={e => setSearch(e.target.value)} 
           />
         </div>
+        
+        {/* Date Filter */}
+        <div className="relative w-48">
+          <input 
+            type="date"
+            className="input w-full"
+            value={selectedDate}
+            onChange={e => setSelectedDate(e.target.value)}
+          />
+          {selectedDate && (
+            <button 
+              onClick={() => setSelectedDate('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-neutral-400 hover:text-neutral-600 focus:outline-none"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+
         <select className="input w-40" value={filter} onChange={e => setFilter(e.target.value)}>
           <option value="all">All Activities</option>
           <option value="login">Logins Only</option>

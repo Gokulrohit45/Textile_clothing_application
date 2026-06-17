@@ -3,6 +3,21 @@ import { createContext, useContext, useState, useEffect } from 'react';
 const OrderContext = createContext();
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
+const getAdminUser = () => {
+  try {
+    const saved = localStorage.getItem('sh_user');
+    if (saved) {
+      const u = JSON.parse(saved);
+      if (u && u.role === 'admin') {
+        return u;
+      }
+    }
+  } catch (e) {
+    console.error('Error fetching admin user from localStorage:', e);
+  }
+  return null;
+};
+
 export const OrderProvider = ({ children }) => {
   const [orders, setOrders] = useState([]);
   const [payments, setPayments] = useState([]);
@@ -57,6 +72,7 @@ export const OrderProvider = ({ children }) => {
 
   const updateOrderStatus = async (orderId, status, trackingId = null, extraParams = {}) => {
     try {
+      const admin = getAdminUser();
       const res = await fetch(`${API_URL}/orders/update-status`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -65,6 +81,7 @@ export const OrderProvider = ({ children }) => {
           status,
           trackingId,
           updatedAt: new Date().toISOString().split('T')[0],
+          adminUser: admin ? { id: admin.id, name: admin.name, email: admin.email } : null,
           ...extraParams
         }),
       });
@@ -108,13 +125,15 @@ export const OrderProvider = ({ children }) => {
 
   const verifyPayment = async (orderId, approved) => {
     try {
+      const admin = getAdminUser();
       const res = await fetch(`${API_URL}/payments/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           orderId,
           approved,
-          verifiedAt: new Date().toISOString().split('T')[0]
+          verifiedAt: new Date().toISOString().split('T')[0],
+          adminUser: admin ? { id: admin.id, name: admin.name, email: admin.email } : null
         }),
       });
       if (res.ok) {

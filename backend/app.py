@@ -162,7 +162,8 @@ def register():
     }
     
     sheets_db.save('customers', new_user)
-    log_activity(new_user['id'], new_user['name'], new_user['email'], "Login (Register)")
+    if new_user.get('role') == 'admin':
+        log_activity(new_user['id'], new_user['name'], new_user['email'], "Login (Register)")
     return jsonify(new_user), 201
 
 @app.route('/api/auth/login', methods=['POST'])
@@ -180,7 +181,8 @@ def login():
     if user['status'] == 'blocked':
         return jsonify({"error": "Your account has been suspended"}), 403
         
-    log_activity(user['id'], user['name'], user['email'], "Login")
+    if user.get('role') == 'admin':
+        log_activity(user['id'], user['name'], user['email'], "Login")
     return jsonify(user), 200
 
 @app.route('/api/auth/profile/update', methods=['POST'])
@@ -238,7 +240,10 @@ def logout_log():
     user_email = data.get('email')
     
     if user_id:
-        log_activity(user_id, user_name, user_email, "Logout")
+        customers = sheets_db.get_all('customers')
+        user = next((c for c in customers if c['id'] == user_id), None)
+        if user and user.get('role') == 'admin':
+            log_activity(user_id, user_name, user_email, "Logout")
         return jsonify({"message": "Logout activity logged"}), 200
     return jsonify({"error": "Missing user details"}), 400
 
@@ -268,8 +273,23 @@ def parse_log_timestamp(ts):
 @app.route('/api/admin/activity-logs', methods=['GET'])
 def get_activity_logs():
     logs = sheets_db.get_all('activity_logs')
-    logs.sort(key=lambda x: parse_log_timestamp(x.get('timestamp', '')), reverse=True)
-    return jsonify(logs), 200
+    customers = sheets_db.get_all('customers')
+    admin_ids = {c['id'] for c in customers if c.get('role') == 'admin'}
+    
+    filtered_logs = []
+    for log in logs:
+        u_id = log.get('userId')
+        if u_id:
+            if u_id in admin_ids:
+                filtered_logs.append(log)
+        else:
+            # Fallback for logs without userId: keep them if the action is admin-only
+            action_lower = log.get('action', '').lower()
+            if any(term in action_lower for term in ['status', 'payment', 'return', 'approve', 'reject']):
+                filtered_logs.append(log)
+                
+    filtered_logs.sort(key=lambda x: parse_log_timestamp(x.get('timestamp', '')), reverse=True)
+    return jsonify(filtered_logs), 200
 
 @app.route('/api/auth/profile/change-password', methods=['POST'])
 def change_password():
@@ -1338,6 +1358,15 @@ def update_order_status():
             
     success = sheets_db.update('orders', order_id, update_data)
     if success:
+        admin_user = data.get('adminUser')
+        if admin_user:
+            action = f"Order Status Changed to {status.capitalize()} (Order {order_id})"
+            if status == 'return_approved':
+                action = f"Return Approved (Order {order_id})"
+            elif status == 'return_rejected':
+                action = f"Return Rejected (Order {order_id})"
+            log_activity(admin_user.get('id'), admin_user.get('name'), admin_user.get('email'), action)
+
         if status == 'delivered':
             try:
                 orders = sheets_db.get_all('orders')
@@ -1408,6 +1437,10 @@ def verify_payment():
             "status": order_status,
             "updatedAt": verified_at
         })
+        admin_user = data.get('adminUser')
+        if admin_user:
+            action = f"Payment Approved (Order {order_id})" if approved else f"Payment Rejected (Order {order_id})"
+            log_activity(admin_user.get('id'), admin_user.get('name'), admin_user.get('email'), action)
         return jsonify({"message": f"Payment verified successfully as {status}"}), 200
         
     return jsonify({"error": "Order not found"}), 404
